@@ -1,0 +1,45 @@
+.toast-box {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+.toast-box.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-box.hide {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.custom-selector {
+  min-height: auto;
+  padding: 1.5rem 1.75rem;
+  text-align: center;
+  cursor: pointer;
+  border: 1px dashed #1b84ff;
+  background-color: #e9f3ff;
+  border-radius: 0.75rem;
+}
+
+/* This is table class */
+.h-70vh {
+  height: 70vh !important;
+}
+
+.sticky-table-header th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #BBBCBE;
+}
+
+/* When loading is DONE -> override background and box shadow*/
+.sticky-table-header.table-active th {
+  background-color: #FFFFFF !important;
+  box-shadow:
+    inset 0 -1px 0 #E5E4E2, /* faux border */
+    0 2px 6px rgba(190, 190, 190, 0.2); /* scroll shadow */
+}
