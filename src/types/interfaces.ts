@@ -278,6 +278,9 @@ export interface Events {
   distance_in_km: number;
   approval_status: number;
   approvalstatusname: string;
+  filtered_start_date?: Date;
+  filtered_end_date?: Date;
+  filtered_dates_count?: number;
   is_deleted: boolean;
   created_by?: string;
   updated_by?: string;

@@ -167,15 +167,15 @@ const List: React.FC = () => {
                           {item?.is_recuring === 1
                             ? `${
                                 helpers.convertDateTime(
-                                  item?.start_date,
+                                  item?.filtered_start_date || item?.start_date,
                                   "DD MMM YYYY"
                                 ) || "N/A"
                               } - ${
                                 helpers.convertDateTime(
-                                  item?.end_date,
+                                  item?.filtered_end_date || item?.end_date,
                                   "DD MMM YYYY"
                                 ) || "N/A"
-                              }`
+                              }${item?.filtered_dates_count ? ` (${item.filtered_dates_count} dates)` : ''}`
                             : helpers.convertDateTime(
                                 item?.start_date,
                                 "DD MMM YYYY"
