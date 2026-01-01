@@ -19,6 +19,8 @@ function Dashboard() {
     image_approval_count: 0,
     volunteer_approval_count: 0,
     review_approval_count: 0,
+    cancelled_event_count: 0,
+    completed_event_count: 0,
   });
   const [currentuser, setCurrentUser] = useState<User | null>(null);
   // const [isLoading, setIsLoading] = useState(false);
@@ -58,6 +60,8 @@ function Dashboard() {
         image_approval_count: response.data.image_approval_count,
         volunteer_approval_count: response.data.volunteer_approval_count,
         review_approval_count: response.data.review_approval_count,
+        cancelled_event_count: response.data.cancelled_event_count,
+        completed_event_count: response.data.completed_event_count,
       });
     } catch (error: any) {
       console.error("Error in api request:", error);
@@ -303,6 +307,46 @@ function Dashboard() {
                             </span>
                             <span className="text-gray-500 fw-semibold fs-6">
                               Pending Feedback Review{" "}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3" to={'/event-list?event_status=3'}>
+                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
+                          <div className="symbol symbol-30px me-5 mb-8">
+                            <span className="symbol-label">
+                              <i className="ki-duotone ki-cross-circle fs-3x text-danger">
+                                <span className="path1"></span>
+                                <span className="path2"></span>
+                              </i>
+                            </span>
+                          </div>
+                          <div className="m-0">
+                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
+                              {dashboarddata.cancelled_event_count}
+                            </span>
+                            <span className="text-gray-500 fw-semibold fs-6">
+                              Cancelled Events
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3" to={'/event-list?event_status=2'}>
+                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
+                          <div className="symbol symbol-30px me-5 mb-8">
+                            <span className="symbol-label">
+                              <i className="ki-duotone ki-verify fs-3x text-success">
+                                <span className="path1"></span>
+                                <span className="path2"></span>
+                              </i>
+                            </span>
+                          </div>
+                          <div className="m-0">
+                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
+                              {dashboarddata.completed_event_count}
+                            </span>
+                            <span className="text-gray-500 fw-semibold fs-6">
+                              Completed Events
                             </span>
                           </div>
                         </div>

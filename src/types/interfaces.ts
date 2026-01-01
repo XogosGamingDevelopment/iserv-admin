@@ -49,6 +49,8 @@ export interface IDashboard {
   image_approval_count: number;
   volunteer_approval_count: number;
   review_approval_count: number;
+  cancelled_event_count: number;
+  completed_event_count: number;
 }
 
 export interface User {
