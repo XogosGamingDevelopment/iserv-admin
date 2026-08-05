@@ -6,6 +6,7 @@ import AdminLayout from '../views/layout/AdminLayout'
 import Dashboard from '../views/Dashboard';
 import AdminList from '../views/Admin/List';
 import SettingList from '../views/Setting/List';
+import WaiverManagement from '../views/Setting/WaiverManagement';
 import NpoList from '../views/Npo/List';
 import ViewNpoDetails from '../views/Npo/ViewDetails';
 import EventInterestList from '../views/EventInterest/List';
@@ -21,6 +22,7 @@ import ViewTeacherDetails from '../views/Teacher/ViewDetails';
 import ReviewList from '../views/Approval/ReviewList';
 import ImageList from '../views/Approval/ImageList';
 import VolunteerList from '../views/Approval/VolunteerList';
+import ServiceReportList from '../views/Approval/ServiceReportList';
 import AgeGroupList from '../views/AgeGroup/List';
 import ReportedList from '../views/Reported/List';
 import BadgeManagementList from '../views/BadgeList/List';
@@ -44,10 +46,17 @@ const ClientRoutes = () => (
 		    </ProtectedRoute>
 		  }
 		/>
-		<Route path='/settings-list' 
+		<Route path='/settings-list'
 		  element={
 		    <ProtectedRoute allowedRoles={['super_admin']}>
 			  <SettingList />
+		    </ProtectedRoute>
+		  }
+		/>
+		<Route path='/waiver-management'
+		  element={
+		    <ProtectedRoute allowedRoles={['super_admin']}>
+			  <WaiverManagement />
 		    </ProtectedRoute>
 		  }
 		/>
@@ -156,13 +165,20 @@ const ClientRoutes = () => (
 			</ProtectedRoute>
 		  }
 		/> 
-		<Route path='/approval-volunteer-list' 
+		<Route path='/approval-volunteer-list'
 		  element={
 		    <ProtectedRoute allowedRoles={['super_admin']}>
 			  <VolunteerList />
 			</ProtectedRoute>
 		  }
-		/> 
+		/>
+		<Route path='/approval-service-reports'
+		  element={
+		    <ProtectedRoute allowedRoles={['super_admin']}>
+			  <ServiceReportList />
+			</ProtectedRoute>
+		  }
+		/>
 		<Route path='/age-group-management' 
 		  element={
 		    <ProtectedRoute allowedRoles={['super_admin']}>

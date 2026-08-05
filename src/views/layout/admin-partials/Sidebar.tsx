@@ -80,20 +80,53 @@ function Sidebar() {
             </div>
             <div className="mx-4 mt-1 mb-1"></div>
             <div
-              className="menu-item"
-              onClick={() => navigate("/settings-list")}
+              data-kt-menu-trigger="click"
+              className="menu-item menu-accordion"
             >
-              <span
-                className={`menu-link ${
-                  checkActivePath("/settings-list", false) ||
-                  checkActivePath("/settings-list/*", true)
-                }`}
-              >
+              <span className="menu-link">
                 <span className="menu-icon">
                   <i className="ki-outline ki-gear text-info fs-2"></i>
                 </span>
                 <span className="menu-title">Settings</span>
+                <span className="menu-arrow"></span>
               </span>
+              <div
+                className="menu-sub menu-sub-accordion"
+                kt-hidden-height="50"
+              >
+                <div
+                  className="menu-item"
+                  onClick={() => navigate("/settings-list")}
+                >
+                  <span
+                    className={`menu-link ${checkActivePath(
+                      "/settings-list",
+                      false
+                    )}`}
+                  >
+                    <span className="menu-bullet">
+                      <span className="bullet bullet-dot"></span>
+                    </span>
+                    <span className="menu-title">Settings List</span>
+                  </span>
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() => navigate("/waiver-management")}
+                >
+                  <span
+                    className={`menu-link ${checkActivePath(
+                      "/waiver-management",
+                      false
+                    )}`}
+                  >
+                    <span className="menu-bullet">
+                      <span className="bullet bullet-dot"></span>
+                    </span>
+                    <span className="menu-title">Waiver Management</span>
+                  </span>
+                </div>
+              </div>
             </div>
             <div className="mx-4 mt-1 mb-1"></div>
             <div className="menu-item" onClick={() => navigate("/npo-list")}>
@@ -267,6 +300,22 @@ function Sidebar() {
                       <span className="bullet bullet-dot"></span>
                     </span>
                     <span className="menu-title">Volunteer List</span>
+                  </span>
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() => navigate("/approval-service-reports")}
+                >
+                  <span
+                    className={`menu-link ${checkActivePath(
+                      "/approval-service-reports",
+                      false
+                    )}`}
+                  >
+                    <span className="menu-bullet">
+                      <span className="bullet bullet-dot"></span>
+                    </span>
+                    <span className="menu-title">Service Reports</span>
                   </span>
                 </div>
               </div>
