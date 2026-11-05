@@ -29,6 +29,8 @@ import BadgeManagementList from '../views/BadgeList/List';
 import NewsLettersEmailList from '../views/NewsLettersEmail/List';
 import UserPosts from '../views/SocialMedia/PostList';
 import ArchivedRating from '../views/ArchivedRating/List';
+import OutreachOrganizations from '../views/Outreach/Organizations';
+import OutreachSchools from '../views/Outreach/Schools';
 
 const ClientRoutes = () => (
 	<Route element={<AdminLayout />}>
@@ -211,6 +213,20 @@ const ClientRoutes = () => (
 		  element={
 		    <ProtectedRoute allowedRoles={['super_admin']}>
 			  <ArchivedRating />
+		    </ProtectedRoute>
+		  }
+		/>
+		<Route path='/outreach-organizations'
+		  element={
+		    <ProtectedRoute allowedRoles={['super_admin']}>
+			  <OutreachOrganizations />
+		    </ProtectedRoute>
+		  }
+		/>
+		<Route path='/outreach-schools'
+		  element={
+		    <ProtectedRoute allowedRoles={['super_admin']}>
+			  <OutreachSchools />
 		    </ProtectedRoute>
 		  }
 		/>

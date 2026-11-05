@@ -407,6 +407,24 @@ function Sidebar() {
                 <span className="menu-title">Social Media</span>
               </span>
             </div>
+            <div className="mx-4 mt-1 mb-1"></div>
+            <div className="menu-item" onClick={() => navigate("/outreach-organizations")}>
+              <span className={`menu-link ${checkActivePath("/outreach-organizations", false)}`}>
+                <span className="menu-icon">
+                  <i className="ki-outline ki-handcart text-info fs-2"></i>
+                </span>
+                <span className="menu-title">Outreach Organizations</span>
+              </span>
+            </div>
+            <div className="mx-4 mt-1 mb-1"></div>
+            <div className="menu-item" onClick={() => navigate("/outreach-schools")}>
+              <span className={`menu-link ${checkActivePath("/outreach-schools", false)}`}>
+                <span className="menu-icon">
+                  <i className="ki-outline ki-teacher text-info fs-2"></i>
+                </span>
+                <span className="menu-title">Outreach Schools</span>
+              </span>
+            </div>
           </div>
         </div>
       </div>
