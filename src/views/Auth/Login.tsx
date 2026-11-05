@@ -5,6 +5,7 @@ import type { AppDispatch } from "../../redux/store";
 import { setUser } from "../../redux/userSlice";
 import helpers from "../../_helpers/common";
 import useAxios from "../../hooks/useAxios";
+import { GoogleLogin } from "@react-oauth/google";
 import { CommonInput, SubmitButton } from "../common";
 
 interface LoginFormState {
@@ -106,6 +107,27 @@ function Login() {
     }
   };
 
+  /* Sign in with Google: the server checks the Google ID token and only lets admins in. */
+  const handleGoogle = async (credential?: string): Promise<void> => {
+    if (!credential) return;
+    setIsSubmitting(true);
+    try {
+      const response: any = await axiosInstance({ url: "users/admin-google-login", method: "POST", data: { credential } });
+      if (!response.error) {
+        localStorage.setItem("token", response.data.authToken);
+        if (response.data.user) {
+          localStorage.setItem("user", JSON.stringify(response.data.user));
+          dispatch(setUser(response.data.user));
+        }
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      // the error message is shown by the axios toast
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const prepareRequestData = async () => {
     let form_data: FormData = {};
     form_data.login_type = logintype;
@@ -136,6 +158,18 @@ function Login() {
                 <div className="text-center mb-11">
                   <h1 className="text-gray-900 fw-bolder mb-3">Sign In</h1>
                   {/*<div className="text-gray-500 fw-semibold fs-6">Your Social Campaigns</div>*/}
+                <div className="d-flex justify-content-center mb-6">
+                  <GoogleLogin
+                    onSuccess={(r) => handleGoogle(r.credential)}
+                    onError={() => undefined}
+                    text="signin_with"
+                    shape="pill"
+                    width="320"
+                  />
+                </div>
+                <div className="separator separator-content my-8">
+                  <span className="w-125px text-gray-500 fw-semibold fs-7">Or with email</span>
+                </div>
                   <div className="text-gray-500 fw-semibold fs-6">
                     Your iServ Account
                   </div>
