@@ -32,200 +32,205 @@ import ArchivedRating from '../views/ArchivedRating/List';
 import OutreachOrganizations from '../views/Outreach/Organizations';
 import OutreachSchools from '../views/Outreach/Schools';
 
+// Who may open the dashboard pages. The server decides for real (middleware/adminAccess); this only keeps
+// people off pages that would refuse them. Sub-admins get everything except Admin Users.
+const SUPER_ADMIN = ['super_admin'];
+const ADMINS = ['super_admin', 'npo_admin', 'student_admin'];
+
 const ClientRoutes = () => (
 	<Route element={<AdminLayout />}>
 		<Route path='/dashboard' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <Dashboard />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/admin-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={SUPER_ADMIN}>
 			  <AdminList />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/settings-list'
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <SettingList />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/waiver-management'
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <WaiverManagement />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/npo-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <NpoList />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/npo-detail/:npo_id' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <ViewNpoDetails />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/event-interest-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <EventInterestList />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/event-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <EventList />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/event-detail/:event_id' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <ViewEventDetail />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/create-update-event/:event_id' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <CreateEvent />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/student-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <StudentList />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/student-detail/:student_id' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <ViewStudentDetails />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/parent-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <ParentList />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/parent-detail/:parent_id' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <ViewParentDetails />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/teacher-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <TeacherList />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/teacher-detail/:teacher_id' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <ViewTeacherDetails />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/approval-review-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <ReviewList />
 			</ProtectedRoute>
 		  }
 		/> 
 		<Route path='/reported-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <ReportedList />
 			</ProtectedRoute>
 		  }
 		/> 
         <Route path='/approval-event-image-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <ImageList />
 			</ProtectedRoute>
 		  }
 		/> 
 		<Route path='/approval-volunteer-list'
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <VolunteerList />
 			</ProtectedRoute>
 		  }
 		/>
 		<Route path='/approval-service-reports'
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <ServiceReportList />
 			</ProtectedRoute>
 		  }
 		/>
 		<Route path='/age-group-management' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <AgeGroupList />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/badge-management-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <BadgeManagementList />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/news-letter-email-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <NewsLettersEmailList />
           </ProtectedRoute>
          }
 		/>
 		<Route path='/user-posts' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <UserPosts />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/archived-review-list' 
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <ArchivedRating />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/outreach-organizations'
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <OutreachOrganizations />
 		    </ProtectedRoute>
 		  }
 		/>
 		<Route path='/outreach-schools'
 		  element={
-		    <ProtectedRoute allowedRoles={['super_admin']}>
+		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <OutreachSchools />
 		    </ProtectedRoute>
 		  }
