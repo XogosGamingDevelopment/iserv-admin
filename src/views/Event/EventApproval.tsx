@@ -162,7 +162,7 @@ const EventApproval: React.FC<props> = ({
             ) : (
               <>
                 {eventDates.map((item) => (
-                  <tr key={item._id} style={{backgroundColor: '#f1f3f9'}}>
+                  <tr key={item._id} style={{ backgroundColor: "rgba(255, 255, 255, 0.04)" }}>
                     <td>
                       <div className="form-check form-check-sm">
                         <input

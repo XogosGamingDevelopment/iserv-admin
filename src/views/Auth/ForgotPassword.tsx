@@ -82,10 +82,10 @@ function ForgotPassword() {
         <div className="d-flex flex-center w-lg-50 pt-15 pt-lg-0 px-10">
           <div className="d-flex flex-center flex-lg-start flex-column">
             <a href="index.html" className="mb-7">
-              <img alt="Logo" src="/admin/mascot-logo.png" />
+              <img alt="Logo" src="/iserv-mascot.png" />
             </a>
             <h2 className="text-white fw-normal m-0">
-              Branding tools designed for your business
+              iServ admin dashboard
             </h2>
           </div>
         </div>

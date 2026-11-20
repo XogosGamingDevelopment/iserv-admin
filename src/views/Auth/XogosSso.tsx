@@ -38,7 +38,7 @@ const XogosSso: React.FC = () => {
   return (
     <div className="d-flex flex-column flex-center min-vh-100 p-10">
       <div className="bg-body rounded-4 p-15 text-center" style={{ maxWidth: 520 }}>
-        <img alt="iServ" src="/mascot-logo.png" className="mb-8" style={{ height: 64 }} />
+        <img alt="iServ" src="/iserv-mascot.png" className="mb-8" style={{ height: 64 }} />
         {error ? (
           <>
             <h2 className="fw-bolder mb-4">Couldn't sign you in</h2>

@@ -143,35 +143,40 @@ function Login() {
       <div className="d-flex flex-column flex-column-fluid flex-lg-row">
         <div className="d-flex flex-center w-lg-50 pt-15 pt-lg-0 px-10">
           <div className="d-flex flex-center flex-lg-start flex-column">
-            <a href="index.html" className="mb-7">
-              <img alt="Logo" src="/mascot-logo.png" />
-            </a>
-            <h2 className="text-white fw-normal m-0">
-              Branding tools designed for your business
+            <div className="is-auth-brand mb-7">
+              <img alt="iServ" src="/iserv-mascot.png" />
+            </div>
+            <div className="is-auth-kicker mb-3">Admin dashboard</div>
+            <h2 className="is-auth-title mb-4">
+              Every hour of service, <span>checked and counted.</span>
             </h2>
+            <p className="is-auth-sub m-0">
+              Review non-profits, events and the service students report, and keep outreach moving.
+            </p>
           </div>
         </div>
         <div className="d-flex flex-column-fluid flex-lg-row-auto justify-content-center justify-content-lg-end p-12 p-lg-20">
           <div className="bg-body d-flex flex-column align-items-stretch flex-center rounded-4 w-md-600px p-20">
             <div className="d-flex flex-center flex-column flex-column-fluid px-lg-10 pb-15 pb-lg-20">
               <form className="form w-100">
-                <div className="text-center mb-11">
-                  <h1 className="text-gray-900 fw-bolder mb-3">Sign In</h1>
-                  {/*<div className="text-gray-500 fw-semibold fs-6">Your Social Campaigns</div>*/}
-                <div className="d-flex justify-content-center mb-6">
-                  <GoogleLogin
-                    onSuccess={(r) => handleGoogle(r.credential)}
-                    onError={() => undefined}
-                    text="signin_with"
-                    shape="pill"
-                    width="320"
-                  />
-                </div>
-                <div className="separator separator-content my-8">
-                  <span className="w-125px text-gray-500 fw-semibold fs-7">Or with email</span>
-                </div>
-                  <div className="text-gray-500 fw-semibold fs-6">
-                    Your iServ Account
+                <div className="text-center mb-10">
+                  <span className="is-auth-kicker mb-4">Your iServ account</span>
+                  <h1 className="fs-2hx mb-7">Sign in</h1>
+                  <div className="d-flex justify-content-center mb-4">
+                    <GoogleLogin
+                      onSuccess={(r) => handleGoogle(r.credential)}
+                      onError={() => undefined}
+                      text="signin_with"
+                      shape="pill"
+                      theme="filled_black"
+                      width="320"
+                    />
+                  </div>
+                  <div className="is-signin-hint">
+                    The Super Admin signs in with Google. Sub-admins can use Google or their email and password.
+                  </div>
+                  <div className="separator separator-content mt-8">
+                    <span className="w-125px text-gray-500 fw-semibold fs-7">Or with email</span>
                   </div>
                 </div>
                 {/*<div className="row g-3 mb-9">

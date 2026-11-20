@@ -262,8 +262,8 @@ const CreateUpdateAdmin: React.FC<ModalProps> = ({ user, getListData }) => {
               onChange={handleInputChange}
             >
               <option value="">Select Role</option>
-              <option value="2">NPO Admin</option>
-              <option value="3">Student Admin</option>
+              <option value="2">Sub-Admin: NPO Admin</option>
+              <option value="3">Sub-Admin: Student Admin</option>
             </select>
             {errors.role_id && (
               <div className="invalid-feedback">{errors.role_id}</div>

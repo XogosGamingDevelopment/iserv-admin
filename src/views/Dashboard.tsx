@@ -5,10 +5,32 @@ import useAxios from "../hooks/useAxios";
 import { User, IDashboard } from "../types/interfaces";
 import { Link } from "react-router-dom";
 
+/* Dashboard in the website's style: a hero with a kicker and gradient name, then stat tiles grouped
+   into "needs you" (amber), people and events. Every tile links to the list behind the number. */
+
+type Tile = { key: keyof IDashboard; label: string; to: string; icon: string; tone?: "amber" | "coral" };
+
+const attention: Tile[] = [
+  { key: "volunteer_approval_count", label: "Volunteer sign-ups to approve", to: "/approval-volunteer-list", icon: "ki-people", tone: "amber" },
+  { key: "image_approval_count", label: "Event photos to approve", to: "/approval-event-image-list", icon: "ki-picture", tone: "amber" },
+  { key: "review_approval_count", label: "Feedback to review", to: "/approval-review-list", icon: "ki-messages", tone: "amber" },
+  { key: "complaint_count", label: "Complaints and issues", to: "/reported-list", icon: "ki-message-notif", tone: "coral" },
+];
+const people: Tile[] = [
+  { key: "student_count", label: "Students", to: "/student-list", icon: "ki-profile-user" },
+  { key: "parent_count", label: "Parents", to: "/parent-list", icon: "ki-people" },
+  { key: "teacher_count", label: "Teachers", to: "/teacher-list", icon: "ki-teacher" },
+  { key: "npo_count", label: "Non-profits", to: "/npo-list", icon: "ki-bank" },
+];
+const events: Tile[] = [
+  { key: "event_count", label: "Total events", to: "/event-list", icon: "ki-calendar-tick" },
+  { key: "completed_event_count", label: "Completed events", to: "/event-list?event_status=2", icon: "ki-verify" },
+  { key: "cancelled_event_count", label: "Cancelled events", to: "/event-list?event_status=3", icon: "ki-cross-circle", tone: "coral" },
+];
+
 function Dashboard() {
   const axiosInstance = useAxios();
   const user = useSelector((state: RootState) => state.user.user);
-  // console.log("user", user);
   const [dashboarddata, setDashboardData] = useState<IDashboard>({
     event_count: 0,
     npo_count: 0,
@@ -23,7 +45,6 @@ function Dashboard() {
     completed_event_count: 0,
   });
   const [currentuser, setCurrentUser] = useState<User | null>(null);
-  // const [isLoading, setIsLoading] = useState(false);
   const isInitialRender = useRef(false);
 
   useEffect(() => {
@@ -42,13 +63,11 @@ function Dashboard() {
   }, []);
 
   const getDashboardData = async () => {
-    // setIsLoading(true);
     try {
       const response: any = await axiosInstance({
         url: "dashboard/dashboard-data",
         method: "GET",
       });
-      //console.log('dashboard response', response.data);
       setDashboardData({
         ...dashboarddata,
         event_count: response.data.event_count,
@@ -65,353 +84,56 @@ function Dashboard() {
       });
     } catch (error: any) {
       console.error("Error in api request:", error);
-    } finally {
-      // setTimeout(() => {
-      //   setIsLoading(false);
-      // }, 500);
     }
   };
 
+  const firstName = (currentuser?.fullname || "").trim().split(/\s+/)[0] || "there";
+  const waiting = attention.reduce((n, t) => n + (Number(dashboarddata[t.key]) || 0), 0);
+
+  const renderTiles = (tiles: Tile[]) => (
+    <div className="is-stat-grid">
+      {tiles.map((t) => (
+        <Link key={t.key} to={t.to} className={`is-stat ${t.tone ? `is-${t.tone}` : ""}`}>
+          <span className="is-stat-icon" aria-hidden="true">
+            <i className={`ki-outline ${t.icon}`}></i>
+          </span>
+          <span className="is-stat-value">{Number(dashboarddata[t.key] || 0).toLocaleString()}</span>
+          <span className="is-stat-label">{t.label}</span>
+        </Link>
+      ))}
+    </div>
+  );
+
   return (
-    <div id="kt_content" className="content flex-column-fluid">
-      <div className="row gx-5 gx-xl-0 mb-5">
-        <div
-          className="card border-transparent"
-          data-bs-theme="light"
-          style={{ backgroundColor: "#1C325E", height: "105px" }}
-        >
-          <div className="card-body d-flex ps-xl-15">
-            <div className="m-0">
-              <div className="position-relative fs-2x z-index-2 fw-bold text-white mb-0">
-                <span className="me-1">Welcome, {currentuser?.fullname}</span>
-              </div>
-            </div>
-            <img
-              src="/assets/media/illustrations/17-dark.png"
-              className="position-absolute me-3 bottom-0 end-0 h-100px"
-              alt=""
-            />
-          </div>
+    <div id="kt_content" className="content flex-column-fluid pb-5">
+      <section className="is-hero mb-2">
+        <span className="is-kicker">iServ Admin</span>
+        <h1 className="is-hero-title">
+          Welcome back, <span className="is-grad">{firstName}</span>.
+        </h1>
+        <p className="is-hero-sub">
+          {waiting > 0
+            ? `${waiting.toLocaleString()} item${waiting === 1 ? " is" : "s are"} waiting on an admin.`
+            : "Nothing is waiting on an admin right now."}
+        </p>
+        <div className="is-hero-actions">
+          <Link to="/approval-service-reports" className="is-btn-teal">
+            Review self-reported service <i className="ki-outline ki-arrow-right fs-4 text-inherit"></i>
+          </Link>
+          <Link to="/outreach-organizations" className="is-btn-ghost">
+            Outreach organizations
+          </Link>
         </div>
-      </div>
-      <div className="row gx-5 gx-xl-10">
-        {/*Main content area start*/}
-        <div className="col-xl-12">
-          {/*Tabs content area start*/}
-          <div className="row gx-5 gx-xl-10">
-            <div className="col-xl-12 mb-10">
-              <div className="card card-flush h-xl-100">
-                <div className="card-body">
-                  <div className="">
-                    <div className="row g-3 g-lg-6 mb-5">
-                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3 cursor-pointer" to={'/event-list'}>
-                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
-                          <div className="symbol symbol-30px me-5 mb-8">
-                            <span className="symbol-label">
-                              <i className="ki-duotone ki-calendar-tick fs-3x text-primary">
-                                <span className="path1"></span>
-                                <span className="path2"></span>
-                                <span className="path3"></span>
-                                <span className="path4"></span>
-                                <span className="path5"></span>
-                                <span className="path6"></span>
-                              </i>
-                            </span>
-                          </div>
-                          <div className="m-0">
-                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                              {dashboarddata.event_count}
-                            </span>
-                            <span className="text-gray-500 fw-semibold fs-6">
-                              Total Events
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3 cursor-pointer" to={'/reported-list'}>
-                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
-                          <div className="symbol symbol-30px me-5 mb-8">
-                            <span className="symbol-label">
-                              <i className="ki-duotone ki-message-notif fs-3x text-primary">
-                                <span className="path1"></span>
-                                <span className="path2"></span>
-                                <span className="path3"></span>
-                                <span className="path4"></span>
-                                <span className="path5"></span>
-                              </i>
-                            </span>
-                          </div>
-                          <div className="m-0">
-                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                              {dashboarddata.complaint_count}
-                            </span>
-                            <span className="text-gray-500 fw-semibold fs-6">
-                              Complaints & Issue
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3 cursor-pointer" to={'/npo-list'}>
-                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
-                          <div className="symbol symbol-30px me-5 mb-8">
-                            <span className="symbol-label">
-                              <i className="ki-duotone ki-people fs-3x text-primary">
-                                <span className="path1"></span>
-                                <span className="path2"></span>
-                                <span className="path3"></span>
-                                <span className="path4"></span>
-                                <span className="path5"></span>
-                              </i>
-                            </span>
-                          </div>
-                          <div className="m-0">
-                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                              {dashboarddata.npo_count}
-                            </span>
-                            <span className="text-gray-500 fw-semibold fs-6">
-                              Registered NPO
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3 cursor-pointer" to={'/student-list'}>
-                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
-                          <div className="symbol symbol-30px me-5 mb-8">
-                            <span className="symbol-label">
-                              <i className="ki-duotone ki-people fs-3x text-primary">
-                                <span className="path1"></span>
-                                <span className="path2"></span>
-                                <span className="path3"></span>
-                                <span className="path4"></span>
-                                <span className="path5"></span>
-                              </i>
-                            </span>
-                          </div>
-                          <div className="m-0">
-                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                              {dashboarddata.student_count}
-                            </span>
-                            <span className="text-gray-500 fw-semibold fs-6">
-                              Registered Students
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    </div>
-                    <div className="row g-3 g-lg-6 mb-5">
-                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3" to={'/teacher-list'}>
-                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
-                          <div className="symbol symbol-30px me-5 mb-8">
-                            <span className="symbol-label">
-                              <i className="ki-duotone ki-people fs-3x text-primary">
-                                <span className="path1"></span>
-                                <span className="path2"></span>
-                                <span className="path3"></span>
-                                <span className="path4"></span>
-                                <span className="path5"></span>
-                              </i>
-                            </span>
-                          </div>
-                          <div className="m-0">
-                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                              {dashboarddata.teacher_count}
-                            </span>
-                            <span className="text-gray-500 fw-semibold fs-6">
-                              Registered Teachers
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3" to={'/parent-list'}>
-                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
-                          <div className="symbol symbol-30px me-5 mb-8">
-                            <span className="symbol-label">
-                              <i className="ki-duotone ki-people fs-3x text-primary">
-                                <span className="path1"></span>
-                                <span className="path2"></span>
-                                <span className="path3"></span>
-                                <span className="path4"></span>
-                                <span className="path5"></span>
-                              </i>
-                            </span>
-                          </div>
-                          <div className="m-0">
-                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                              {dashboarddata.parent_count}
-                            </span>
-                            <span className="text-gray-500 fw-semibold fs-6">
-                              Registered Parents
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3" to={'/approval-event-image-list'}>
-                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
-                          <div className="symbol symbol-30px me-5 mb-8">
-                            <span className="symbol-label">
-                              <i className="ki-duotone ki-picture fs-3x text-primary">
-                                <span className="path1"></span>
-                                <span className="path2"></span>
-                              </i>
-                            </span>
-                          </div>
-                          <div className="m-0">
-                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                              {dashboarddata.image_approval_count}
-                            </span>
-                            <span className="text-gray-500 fw-semibold fs-6">
-                              Pending Image Approval
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3" to={'/approval-volunteer-list'}>
-                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
-                          <div className="symbol symbol-30px me-5 mb-8">
-                            <span className="symbol-label">
-                              <i className="ki-duotone ki-people fs-3x text-primary">
-                                <span className="path1"></span>
-                                <span className="path2"></span>
-                                <span className="path3"></span>
-                                <span className="path4"></span>
-                                <span className="path5"></span>
-                              </i>
-                            </span>
-                          </div>
-                          <div className="m-0">
-                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                              {dashboarddata.volunteer_approval_count}
-                            </span>
-                            <span className="text-gray-500 fw-semibold fs-6">
-                              Pending Volunteer Approval
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3" to={'/approval-review-list'}>
-                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
-                          <div className="symbol symbol-30px me-5 mb-8">
-                            <span className="symbol-label">
-                              <i className="ki-duotone ki-messages fs-3x text-primary">
-                                <span className="path1"></span>
-                                <span className="path2"></span>
-                                <span className="path3"></span>
-                                <span className="path4"></span>
-                                <span className="path5"></span>
-                              </i>
-                            </span>
-                          </div>
-                          <div className="m-0">
-                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                              {dashboarddata.review_approval_count}
-                            </span>
-                            <span className="text-gray-500 fw-semibold fs-6">
-                              Pending Feedback Review{" "}
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3" to={'/event-list?event_status=3'}>
-                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
-                          <div className="symbol symbol-30px me-5 mb-8">
-                            <span className="symbol-label">
-                              <i className="ki-duotone ki-cross-circle fs-3x text-danger">
-                                <span className="path1"></span>
-                                <span className="path2"></span>
-                              </i>
-                            </span>
-                          </div>
-                          <div className="m-0">
-                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                              {dashboarddata.cancelled_event_count}
-                            </span>
-                            <span className="text-gray-500 fw-semibold fs-6">
-                              Cancelled Events
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                      <Link className="col-12 col-sm-6 col-md-4 col-lg-3" to={'/event-list?event_status=2'}>
-                        <div className="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5">
-                          <div className="symbol symbol-30px me-5 mb-8">
-                            <span className="symbol-label">
-                              <i className="ki-duotone ki-verify fs-3x text-success">
-                                <span className="path1"></span>
-                                <span className="path2"></span>
-                              </i>
-                            </span>
-                          </div>
-                          <div className="m-0">
-                            <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                              {dashboarddata.completed_event_count}
-                            </span>
-                            <span className="text-gray-500 fw-semibold fs-6">
-                              Completed Events
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/*Tabs content area end*/}
-          {/*Chart content area start*/}
-          {/*<div className="row g-5 g-xl-10">
-            <div className="col-xl-12">
-              <div className="card card-flush h-xl-100">
-                <div className="card-header pt-7">
-                  <h3 className="card-title align-items-start flex-column">
-                    <span className="card-label fw-bold text-gray-800">
-                      Event Statastic
-                    </span>
-                    <span className="text-gray-500 mt-1 fw-semibold fs-6">
-                      Monthly Event
-                    </span>
-                  </h3>
-                </div>
-                <div className="card-body d-flex align-items-end px-0 pt-3 pb-5">
-                  <div
-                    id="kt_charts_widget_18_chart"
-                    className="h-325px w-100 min-h-auto ps-4 pe-6"
-                    style={{ minHeight: "340px" }}
-                  >
-                    <div
-                      id="apexchartswo6sexmv"
-                      className="apexcharts-canvas apexchartswo6sexmv apexcharts-theme-"
-                      style={{ width: "935.5px", height: "325px" }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-			  </div>*/}
-          {/*Chart content area end*/}
-        </div>
-        {/*Main content area end*/}
-        {/*Notification content area start*/}
-        {/*<div className="col-xl-3">
-          <div className="card card-flush h-xl-100">
-            <div className="card-header pt-7">
-              <h3 className="card-title align-items-start flex-column">
-                <span className="card-label fw-bold text-gray-900">
-                  Notifications
-                </span>
-              </h3>
-            </div>
-            <div className="card-body">
-              <div
-                className="hover-scroll-overlay-y pe-6 me-n6"
-                style={{ height: "415px" }}
-              >
-              </div>
-            </div>
-          </div>
-			</div>*/}
-        {/*Notification content area end*/}
-      </div>
+      </section>
+
+      <p className="is-section-label">Needs your attention</p>
+      {renderTiles(attention)}
+
+      <p className="is-section-label">People</p>
+      {renderTiles(people)}
+
+      <p className="is-section-label">Events</p>
+      {renderTiles(events)}
     </div>
   );
 }

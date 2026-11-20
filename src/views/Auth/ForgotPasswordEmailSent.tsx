@@ -38,7 +38,7 @@ function ForgotPasswordEmailSent() {
                 <a href="/" className="">
                   <img
                     alt="Logo"
-                    src="/admin/mascot-logo.png"
+                    src="/iserv-mascot.png"
                     className="h-40px"
                   />
                 </a>

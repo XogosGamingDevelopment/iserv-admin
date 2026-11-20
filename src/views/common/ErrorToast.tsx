@@ -7,6 +7,7 @@ type ErrorToastProps = {
   status: number;
 };
 
+/* Dark toast with a coral dot (styles: .is-toast in theme.css). */
 const ErrorToast: React.FC<ErrorToastProps> = ({ t, message, status }) => {
   const [animate, setAnimate] = useState(false);
 
@@ -16,40 +17,16 @@ const ErrorToast: React.FC<ErrorToastProps> = ({ t, message, status }) => {
 
   return (
     <div
-      className={`toast-box ${animate ? "show" : ""} ${
-        !t.visible ? "hide" : ""
-      }`}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "10px",
-        padding: "12px",
-        borderRadius: "5px",
-        background:
-          "linear-gradient(90deg, rgba(36,0,2,0.2329) 0%, rgba(217,31,31,0.3366) 0%, rgba(253,254,255,1) 100%)",
-        color: "#333",
-        borderLeft: "4px solid red",
-        width: "300px",
-        boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
-      }}
+      role="alert"
+      className={`toast-box is-toast is-toast-err ${animate ? "show" : ""} ${!t.visible ? "hide" : ""}`}
     >
-      <span style={{ fontWeight: "bold" }}>
-        Error {status}: {message}
+      <span className="is-toast-dot" aria-hidden="true"></span>
+      <span className="is-toast-msg">
+        {message}
+        {status ? <span className="d-block fs-8 fw-semibold opacity-50">Error {status}</span> : null}
       </span>
-      <button
-        onClick={() => toast.dismiss(t.id)}
-        style={{
-          background: "red",
-          color: "white",
-          border: "none",
-          padding: "5px 8px",
-          cursor: "pointer",
-          borderRadius: "50%",
-          fontWeight: "bold",
-        }}
-      >
-        Xs
+      <button type="button" className="is-toast-close" aria-label="Dismiss" onClick={() => toast.dismiss(t.id)}>
+        ✕
       </button>
     </div>
   );

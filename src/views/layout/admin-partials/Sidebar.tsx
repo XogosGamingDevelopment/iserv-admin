@@ -1,433 +1,114 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../redux/store";
+
+interface NavItem {
+  label: string;
+  to: string;
+  icon: string;
+  // Other paths (prefixes) that keep this item highlighted, e.g. a detail page.
+  also?: string[];
+  superAdminOnly?: boolean;
+}
+
+const sections: { heading: string; items: NavItem[] }[] = [
+  {
+    heading: "Overview",
+    items: [{ label: "Dashboard", to: "/dashboard", icon: "ki-home-2" }],
+  },
+  {
+    heading: "Service to verify",
+    items: [
+      { label: "Self-Reported Service", to: "/approval-service-reports", icon: "ki-verify" },
+      { label: "Volunteer Sign-ups", to: "/approval-volunteer-list", icon: "ki-profile-user" },
+      { label: "Event Photos", to: "/approval-event-image-list", icon: "ki-picture" },
+      { label: "Reviews", to: "/approval-review-list", icon: "ki-star" },
+      { label: "Archived Reviews", to: "/archived-review-list", icon: "ki-archive-tick" },
+      { label: "Reported Items", to: "/reported-list", icon: "ki-message-notif" },
+    ],
+  },
+  {
+    heading: "Outreach",
+    items: [
+      { label: "Organizations", to: "/outreach-organizations", icon: "ki-handcart" },
+      { label: "Schools", to: "/outreach-schools", icon: "ki-teacher" },
+    ],
+  },
+  {
+    heading: "People",
+    items: [
+      { label: "Non-Profits", to: "/npo-list", icon: "ki-people", also: ["/npo-detail"] },
+      { label: "Students", to: "/student-list", icon: "ki-people", also: ["/student-detail"] },
+      { label: "Parents", to: "/parent-list", icon: "ki-people", also: ["/parent-detail"] },
+      { label: "Teachers", to: "/teacher-list", icon: "ki-people", also: ["/teacher-detail"] },
+    ],
+  },
+  {
+    heading: "Events",
+    items: [
+      { label: "Events", to: "/event-list", icon: "ki-calendar-add", also: ["/event-detail", "/create-update-event"] },
+      { label: "Event Interests", to: "/event-interest-list", icon: "ki-element-5" },
+      { label: "Social Media", to: "/user-posts", icon: "ki-social-media" },
+    ],
+  },
+  {
+    heading: "Setup",
+    items: [
+      { label: "Admin Users", to: "/admin-list", icon: "ki-security-user", superAdminOnly: true },
+      { label: "Settings", to: "/settings-list", icon: "ki-gear" },
+      { label: "Waivers", to: "/waiver-management", icon: "ki-document" },
+      { label: "Age Groups", to: "/age-group-management", icon: "ki-user" },
+      { label: "Badges", to: "/badge-management-list", icon: "ki-badge" },
+      { label: "Newsletter Emails", to: "/news-letter-email-list", icon: "ki-folder" },
+    ],
+  },
+];
 
 function Sidebar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  //console.log('pathname', pathname);
-  // Enhanced path checking function
-  const checkActivePath = (path_string: string, regexp: boolean) => {
-    if (!regexp) {
-      // Exact match for static paths
-      return pathname === path_string ? "active" : "";
-    } else {
-      // Regex match for dynamic segments
-      const basePath = path_string.replace("/*", ""); // Remove wildcard for comparison
-      const pathParts = pathname.split("/").filter(Boolean); // Split and clean path
-      const baseParts = basePath.split("/").filter(Boolean);
+  // Only the Super Admin (role 1) manages admins; sub-admins (roles 2-3) don't see that item. The server enforces it too.
+  const isSuperAdmin = Number((useSelector((state: RootState) => state.user.user) as any)?.role_id) === 1;
 
-      // Check if the base parts match the beginning of the current path
-      const isMatch = baseParts.every(
-        (part, index) => part === pathParts[index]
-      );
-
-      return isMatch ? "active" : "";
-    }
-  };
+  const isActive = (item: NavItem) =>
+    pathname === item.to || (item.also || []).some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   return (
     <div
       id="kt_aside"
-      className="aside card"
+      className="aside"
       data-kt-drawer="true"
       data-kt-drawer-name="aside"
       data-kt-drawer-activate="{default: true, lg: false}"
       data-kt-drawer-overlay="true"
-      data-kt-drawer-width="{default:'200px', '300px': '250px'}"
+      data-kt-drawer-width="{default:'230px', '300px': '260px'}"
       data-kt-drawer-direction="start"
       data-kt-drawer-toggle="#kt_aside_toggle"
     >
-      <div className="aside-menu flex-column-fluid px-4">
-        <div
-          className="hover-scroll-overlay-y mh-100 my-5"
-          id="kt_aside_menu_wrapper"
-          data-kt-scroll="true"
-          data-kt-scroll-activate="true"
-          data-kt-scroll-height="auto"
-          data-kt-scroll-dependencies="{default: '#kt_aside_footer', lg: '#kt_header, #kt_aside_footer'}"
-          data-kt-scroll-wrappers="#kt_aside, #kt_aside_menu"
-          data-kt-scroll-offset="{default: '5px', lg: '75px'}"
-          style={{ height: "315px" }}
-        >
-          <div
-            className="menu menu-column menu-rounded menu-sub-indention fw-semibold fs-6"
-            id="#kt_aside_menu"
-            data-kt-menu="true"
-          >
-            <div className="menu-item" onClick={() => navigate("/dashboard")}>
-              <span
-                className={`menu-link ${checkActivePath("/dashboard", false)}`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-home-2 text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Dashboards</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div className="menu-item" onClick={() => navigate("/admin-list")}>
-              <span
-                className={`menu-link ${
-                  checkActivePath("/admin-list", false) ||
-                  checkActivePath("/admin-list/*", true)
-                }`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-security-user text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Admin Users List</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div
-              data-kt-menu-trigger="click"
-              className="menu-item menu-accordion"
-            >
-              <span className="menu-link">
-                <span className="menu-icon">
-                  <i className="ki-outline ki-gear text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Settings</span>
-                <span className="menu-arrow"></span>
-              </span>
-              <div
-                className="menu-sub menu-sub-accordion"
-                kt-hidden-height="50"
-              >
-                <div
-                  className="menu-item"
-                  onClick={() => navigate("/settings-list")}
+      <nav className="is-nav" aria-label="Admin sections">
+        {sections.map((section) => {
+          const items = section.items.filter((i) => !i.superAdminOnly || isSuperAdmin);
+          if (!items.length) return null;
+          return (
+            <React.Fragment key={section.heading}>
+              <div className="is-nav-heading">{section.heading}</div>
+              {items.map((item) => (
+                <button
+                  key={item.to}
+                  type="button"
+                  className={`is-nav-link ${isActive(item) ? "active" : ""}`}
+                  aria-current={isActive(item) ? "page" : undefined}
+                  onClick={() => navigate(item.to)}
                 >
-                  <span
-                    className={`menu-link ${checkActivePath(
-                      "/settings-list",
-                      false
-                    )}`}
-                  >
-                    <span className="menu-bullet">
-                      <span className="bullet bullet-dot"></span>
-                    </span>
-                    <span className="menu-title">Settings List</span>
-                  </span>
-                </div>
-                <div
-                  className="menu-item"
-                  onClick={() => navigate("/waiver-management")}
-                >
-                  <span
-                    className={`menu-link ${checkActivePath(
-                      "/waiver-management",
-                      false
-                    )}`}
-                  >
-                    <span className="menu-bullet">
-                      <span className="bullet bullet-dot"></span>
-                    </span>
-                    <span className="menu-title">Waiver Management</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div className="menu-item" onClick={() => navigate("/npo-list")}>
-              <span
-                className={`menu-link ${
-                  checkActivePath("/npo-list", false) ||
-                  checkActivePath("/npo-detail/*", true)
-                }`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-people text-info fs-2"></i>
-                </span>
-                <span className="menu-title">NPO List</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div
-              className="menu-item"
-              onClick={() => navigate("/student-list")}
-            >
-              <span
-                className={`menu-link ${
-                  checkActivePath("/student-list", false) ||
-                  checkActivePath("/student-detail/*", true)
-                }`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-people text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Student List</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div className="menu-item" onClick={() => navigate("/parent-list")}>
-              <span
-                className={`menu-link ${
-                  checkActivePath("/parent-list", false) ||
-                  checkActivePath("/parent-detail/*", true)
-                }`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-people text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Parent List</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div
-              className="menu-item"
-              onClick={() => navigate("/teacher-list")}
-            >
-              <span
-                className={`menu-link ${
-                  checkActivePath("/teacher-list", false) ||
-                  checkActivePath("/teacher-detail/*", true)
-                }`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-people text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Teacher List</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div
-              className="menu-item"
-              onClick={() => navigate("/event-interest-list")}
-            >
-              <span
-                className={`menu-link ${checkActivePath(
-                  "/event-interest-list",
-                  false
-                )}`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-element-5 text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Event Interest List</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div className="menu-item" onClick={() => navigate("/event-list")}>
-              <span
-                className={`menu-link ${
-                  checkActivePath("/event-list", false) ||
-                  checkActivePath("/event-detail/*", true)
-                }`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-calendar-add text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Event List</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div
-              className="menu-item"
-              onClick={() => navigate("/reported-list")}
-            >
-              <span
-                className={`menu-link ${checkActivePath(
-                  "/reported-list",
-                  false
-                )}`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-message-notif text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Reported</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div
-              data-kt-menu-trigger="click"
-              className="menu-item menu-accordion"
-            >
-              <span className="menu-link">
-                <span className="menu-icon">
-                  <i className="ki-outline ki-color-swatch text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Approval List</span>
-                <span className="menu-arrow"></span>
-              </span>
-              <div
-                className="menu-sub menu-sub-accordion"
-                kt-hidden-height="50"
-              >
-                <div
-                  className="menu-item"
-                  onClick={() => navigate("/approval-review-list")}
-                >
-                  <span
-                    className={`menu-link ${checkActivePath(
-                      "/approval-review-list",
-                      false
-                    )}`}
-                  >
-                    <span className="menu-bullet">
-                      <span className="bullet bullet-dot"></span>
-                    </span>
-                    <span className="menu-title">Review List</span>
-                  </span>
-                </div>
-                <div
-                  className="menu-item"
-                  onClick={() => navigate("/approval-event-image-list")}
-                >
-                  <span
-                    className={`menu-link ${checkActivePath(
-                      "/approval-event-image-list",
-                      false
-                    )}`}
-                  >
-                    <span className="menu-bullet">
-                      <span className="bullet bullet-dot"></span>
-                    </span>
-                    <span className="menu-title">Image List</span>
-                  </span>
-                </div>
-                <div
-                  className="menu-item"
-                  onClick={() => navigate("/approval-volunteer-list")}
-                >
-                  <span
-                    className={`menu-link ${checkActivePath(
-                      "/approval-volunteer-list",
-                      false
-                    )}`}
-                  >
-                    <span className="menu-bullet">
-                      <span className="bullet bullet-dot"></span>
-                    </span>
-                    <span className="menu-title">Volunteer List</span>
-                  </span>
-                </div>
-                <div
-                  className="menu-item"
-                  onClick={() => navigate("/approval-service-reports")}
-                >
-                  <span
-                    className={`menu-link ${checkActivePath(
-                      "/approval-service-reports",
-                      false
-                    )}`}
-                  >
-                    <span className="menu-bullet">
-                      <span className="bullet bullet-dot"></span>
-                    </span>
-                    <span className="menu-title">Service Reports</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-			<div className="mx-4 mt-1 mb-1"></div>
-            <div
-              className="menu-item"
-              onClick={() => navigate("/archived-review-list")}
-            >
-              <span
-                className={`menu-link ${checkActivePath(
-                  "/archived-review-list",
-                  false
-                )}`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-archive-tick text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Archived Review List</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            {/*<div className="menu-item">
-					  <span className={`menu-link ${checkActivePath('/flag-list', false)}`}>
-						<span className="menu-icon">
-						  <i className="ki-outline ki-flag text-info fs-2"></i>
-						</span>
-						<span className="menu-title">Flaged List</span>
-					  </span>
-					</div>*/}
-            <div
-              className="menu-item"
-              onClick={() => navigate("/age-group-management")}
-            >
-              <span
-                className={`menu-link ${checkActivePath(
-                  "/age-group-management",
-                  false
-                )}`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-user text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Age Group List</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div
-              className="menu-item"
-              onClick={() => navigate("/badge-management-list")}
-            >
-              <span
-                className={`menu-link ${checkActivePath(
-                  "/badge-management-list",
-                  false
-                )}`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-badge text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Badge Management List</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div
-              className="menu-item"
-              onClick={() => navigate("/news-letter-email-list")}
-            >
-              <span
-                className={`menu-link ${checkActivePath(
-                  "/news-letter-email-list",
-                  false
-                )}`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-folder text-info fs-2"></i>
-                </span>
-                <span className="menu-title">News Letter Email List</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div className="menu-item" onClick={() => navigate("/user-posts")}>
-              <span
-                className={`menu-link ${checkActivePath("/user-posts", false)}`}
-              >
-                <span className="menu-icon">
-                  <i className="ki-outline ki-social-media text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Social Media</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div className="menu-item" onClick={() => navigate("/outreach-organizations")}>
-              <span className={`menu-link ${checkActivePath("/outreach-organizations", false)}`}>
-                <span className="menu-icon">
-                  <i className="ki-outline ki-handcart text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Outreach Organizations</span>
-              </span>
-            </div>
-            <div className="mx-4 mt-1 mb-1"></div>
-            <div className="menu-item" onClick={() => navigate("/outreach-schools")}>
-              <span className={`menu-link ${checkActivePath("/outreach-schools", false)}`}>
-                <span className="menu-icon">
-                  <i className="ki-outline ki-teacher text-info fs-2"></i>
-                </span>
-                <span className="menu-title">Outreach Schools</span>
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+                  <i className={`ki-outline ${item.icon}`} aria-hidden="true"></i>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </React.Fragment>
+          );
+        })}
+      </nav>
     </div>
   );
 }

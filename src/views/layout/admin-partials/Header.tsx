@@ -19,6 +19,9 @@ function Header() {
     }
   }, [user]);
 
+  // Shown next to the name so it is clear which kind of admin is signed in.
+  const roleLabel = ({ 1: "Super Admin", 2: "Sub-Admin", 3: "Sub-Admin" } as Record<number, string>)[Number((currentuser as any)?.role_id)] || "";
+
   const logout = () => {
     localStorage.clear();
     navigate('/login')
@@ -26,24 +29,25 @@ function Header() {
 	
 	return (
 		<>
-		  <div id="kt_header" className="header " style={{ background: `linear-gradient(90deg, #774ABF 20%, #5578CF 100%)` }}>
+		  <div id="kt_header" className="header">
 		    <div className="container-fluid d-flex flex-stack">
 			  <div className="d-flex align-items-center me-5">
 				<div className="d-lg-none btn btn-icon btn-active-color-white w-30px h-30px ms-n2 me-3" id="kt_aside_toggle">
 				  <i className="ki-duotone ki-abstract-14 fs-2"><span className="path1"></span><span className="path2"></span></i>			
 				</div>
-				<Link to="#">
-				  <img alt="Logo" src="/mascot-logo.png" className="h-45px h-lg-50px" />
+				<Link to="/dashboard" className="is-brand">
+				  <img alt="iServ" src="/iserv-mascot.png" />
+				  <span className="is-brand-tag d-none d-sm-inline">Admin</span>
 				</Link>
 			  </div>
 			  <div className="d-flex align-items-center flex-shrink-0">
 				<div className="d-flex align-items-center ms-1" id="kt_header_user_menu_toggle">
 				  <div className="btn btn-flex align-items-center bg-hover-white bg-hover-opacity-10 py-2 px-2 px-md-3" data-kt-menu-trigger="click" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
 				    <div className="d-none d-md-flex flex-column align-items-end justify-content-center me-2 me-md-4">
-					  <span className="text-white fs-8 fw-semibold lh-1 mb-1">{currentuser?.fullname}</span>
-					  {/*<span className="text-white fs-8 fw-bold lh-1">{common.splitAndCapitalizeFirstWord(currentuser?.rolename || '', '_')}</span>*/}
-					  <span className="text-white fs-8 fw-bold lh-1">{currentuser?.email}</span>
+					  <span className="is-user-name mb-1">{currentuser?.fullname}</span>
+					  <span className="is-user-mail">{currentuser?.email}</span>
 				    </div>
+				    {roleLabel ? <span className="is-role-chip d-none d-md-inline me-3">{roleLabel}</span> : null}
 				    <div className="symbol symbol-30px symbol-md-40px">
 					  <img src={currentuser?.imagepath} alt={currentuser?.fullname} />
 				    </div>
