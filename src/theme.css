@@ -157,6 +157,10 @@ html[data-bs-theme="dark"] {
   --bs-aside-bg-color: transparent;
 }
 
+/* Embedded frames (the Google sign-in button) are light pages; matching their colour scheme stops the browser
+   painting an opaque white box behind them on our dark page. */
+html[data-bs-theme="dark"] iframe { color-scheme: light; }
+
 /* ---------- Page ---------- */
 html[data-bs-theme="dark"] body {
   background: linear-gradient(135deg, #020617 0%, #042f2e 55%, #2e1065 100%) fixed !important;
