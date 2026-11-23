@@ -4,6 +4,7 @@ import type { RootState } from "../redux/store";
 import useAxios from "../hooks/useAxios";
 import { User, IDashboard } from "../types/interfaces";
 import { Link } from "react-router-dom";
+import ProjectsMapView from "./Projects/ProjectsMapView";
 
 /* Dashboard in the website's style: a hero with a kicker and gradient name, then stat tiles grouped
    into "needs you" (amber), people and events. Every tile links to the list behind the number. */
@@ -11,6 +12,8 @@ import { Link } from "react-router-dom";
 type Tile = { key: keyof IDashboard; label: string; to: string; icon: string; tone?: "amber" | "coral" };
 
 const attention: Tile[] = [
+  { key: "self_report_new_count", label: "Self-reported service to review", to: "/approval-service-reports?review=new", icon: "ki-verify", tone: "amber" },
+  { key: "self_report_flagged_count", label: "Flagged for the Super Admin", to: "/approval-service-reports?review=flagged", icon: "ki-flag", tone: "coral" },
   { key: "volunteer_approval_count", label: "Volunteer sign-ups to approve", to: "/approval-volunteer-list", icon: "ki-people", tone: "amber" },
   { key: "image_approval_count", label: "Event photos to approve", to: "/approval-event-image-list", icon: "ki-picture", tone: "amber" },
   { key: "review_approval_count", label: "Feedback to review", to: "/approval-review-list", icon: "ki-messages", tone: "amber" },
@@ -81,6 +84,8 @@ function Dashboard() {
         review_approval_count: response.data.review_approval_count,
         cancelled_event_count: response.data.cancelled_event_count,
         completed_event_count: response.data.completed_event_count,
+        self_report_new_count: response.data.self_report_new_count ?? 0,
+        self_report_flagged_count: response.data.self_report_flagged_count ?? 0,
       });
     } catch (error: any) {
       console.error("Error in api request:", error);
@@ -128,6 +133,9 @@ function Dashboard() {
 
       <p className="is-section-label">Needs your attention</p>
       {renderTiles(attention)}
+
+      <p className="is-section-label">Projects map</p>
+      <div className="card"><div className="card-body"><ProjectsMapView compact /></div></div>
 
       <p className="is-section-label">People</p>
       {renderTiles(people)}

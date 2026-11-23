@@ -23,6 +23,9 @@ import ReviewList from '../views/Approval/ReviewList';
 import ImageList from '../views/Approval/ImageList';
 import VolunteerList from '../views/Approval/VolunteerList';
 import ServiceReportList from '../views/Approval/ServiceReportList';
+import PhotoGallery from '../views/Approval/PhotoGallery';
+import ProjectsMap from '../views/Projects/ProjectsMap';
+import AllProjects from '../views/Projects/AllProjects';
 import AgeGroupList from '../views/AgeGroup/List';
 import ReportedList from '../views/Reported/List';
 import BadgeManagementList from '../views/BadgeList/List';
@@ -176,6 +179,27 @@ const ClientRoutes = () => (
 		  element={
 		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <VolunteerList />
+			</ProtectedRoute>
+		  }
+		/>
+		<Route path='/photo-gallery'
+		  element={
+		    <ProtectedRoute allowedRoles={ADMINS}>
+			  <PhotoGallery />
+			</ProtectedRoute>
+		  }
+		/>
+		<Route path='/projects-map'
+		  element={
+		    <ProtectedRoute allowedRoles={ADMINS}>
+			  <ProjectsMap />
+			</ProtectedRoute>
+		  }
+		/>
+		<Route path='/all-projects'
+		  element={
+		    <ProtectedRoute allowedRoles={ADMINS}>
+			  <AllProjects />
 			</ProtectedRoute>
 		  }
 		/>

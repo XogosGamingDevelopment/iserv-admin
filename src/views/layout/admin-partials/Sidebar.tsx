@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../redux/store";
+import useAxios from "../../../hooks/useAxios";
 
 interface NavItem {
   label: string;
@@ -10,19 +11,25 @@ interface NavItem {
   // Other paths (prefixes) that keep this item highlighted, e.g. a detail page.
   also?: string[];
   superAdminOnly?: boolean;
+  // Shows the number of self-reported service reports that need an admin (new + flagged).
+  badge?: "selfReports";
 }
 
 const sections: { heading: string; items: NavItem[] }[] = [
   {
     heading: "Overview",
-    items: [{ label: "Dashboard", to: "/dashboard", icon: "ki-home-2" }],
+    items: [
+      { label: "Dashboard", to: "/dashboard", icon: "ki-home-2" },
+      { label: "Projects Map", to: "/projects-map", icon: "ki-geolocation" },
+      { label: "All Projects & Events", to: "/all-projects", icon: "ki-calendar-8" },
+    ],
   },
   {
     heading: "Service to verify",
     items: [
-      { label: "Self-Reported Service", to: "/approval-service-reports", icon: "ki-verify" },
+      { label: "Self-Reported Service", to: "/approval-service-reports", icon: "ki-verify", badge: "selfReports" },
       { label: "Volunteer Sign-ups", to: "/approval-volunteer-list", icon: "ki-profile-user" },
-      { label: "Event Photos", to: "/approval-event-image-list", icon: "ki-picture" },
+      { label: "Photo Gallery", to: "/photo-gallery", icon: "ki-picture", also: ["/approval-event-image-list"] },
       { label: "Reviews", to: "/approval-review-list", icon: "ki-star" },
       { label: "Archived Reviews", to: "/archived-review-list", icon: "ki-archive-tick" },
       { label: "Reported Items", to: "/reported-list", icon: "ki-message-notif" },
@@ -71,6 +78,20 @@ function Sidebar() {
   // Only the Super Admin (role 1) manages admins; sub-admins (roles 2-3) don't see that item. The server enforces it too.
   const isSuperAdmin = Number((useSelector((state: RootState) => state.user.user) as any)?.role_id) === 1;
 
+  // New + flagged self-reports, refreshed every two minutes and whenever the Self-Reported Service page changes one.
+  const axiosInstance = useAxios();
+  const [selfReports, setSelfReports] = useState<{ new: number; flagged: number } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const load = () => axiosInstance({ url: "independent-projects/admin-counts", method: "GET" }).then((r: any) => { if (alive && r?.data) setSelfReports(r.data); }).catch(() => undefined);
+    load();
+    const t = window.setInterval(load, 120000);
+    window.addEventListener("iserv:self-report-counts", load);
+    return () => { alive = false; window.clearInterval(t); window.removeEventListener("iserv:self-report-counts", load); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const badgeOf = (item: NavItem) => (item.badge === "selfReports" && selfReports ? selfReports.new + selfReports.flagged : 0);
+
   const isActive = (item: NavItem) =>
     pathname === item.to || (item.also || []).some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
@@ -103,6 +124,9 @@ function Sidebar() {
                 >
                   <i className={`ki-outline ${item.icon}`} aria-hidden="true"></i>
                   <span>{item.label}</span>
+                  {badgeOf(item) > 0 ? (
+                    <span className="is-nav-badge" aria-label={`${badgeOf(item)} need review`} title={selfReports?.flagged ? `${selfReports.new} new · ${selfReports.flagged} flagged` : undefined}>{badgeOf(item)}</span>
+                  ) : null}
                 </button>
               ))}
             </React.Fragment>

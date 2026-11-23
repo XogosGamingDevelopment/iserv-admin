@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import EventApproval from "./EventApproval";
 import Pagination from "../common/Pagination";
 import ContentLoader from "../common/ContentLoader";
+import { useAttendance, AttendanceCell, PopularityPill } from "../common/Attendance";
 
 const List: React.FC = () => {
   const axiosInstance = useAxios();
@@ -24,6 +25,8 @@ const List: React.FC = () => {
     approval_status: "",
   });
   const [results, setResults] = useState<Events[] | null>(null);
+  // Asked-for vs. came, and popularity of repeating events (Nov 2026)
+  const attendance = useAttendance((results || []).map((e: any) => e._id));
   const [totalItems, setTotalItems] = useState(0);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -124,7 +127,8 @@ const List: React.FC = () => {
                     <th className="min-w-250px">Event Title</th>
                     <th className="min-w-200px">Organization/NPO Name</th>
                     <th className="min-w-100px">Address</th>
-                    <th className="min-w-100px">Volunteer</th>
+                    <th className="min-w-150px">Came / Asked</th>
+                    <th className="min-w-125px">Popularity</th>
                     <th className="min-w-100px text-center">Event Date</th>
                     <th className="min-w-70px">Event Status</th>
                     <th className="min-w-70px">Approval Status</th>
@@ -135,7 +139,7 @@ const List: React.FC = () => {
                 <tbody className="fw-semibold text-gray-600">
                   {!results || results.length === 0 ? (
                     <tr className="text-center">
-                      <td colSpan={10}>No Content Found</td>
+                      <td colSpan={11}>No Content Found</td>
                     </tr>
                   ) : (
                     results.map((item) => (
@@ -160,9 +164,8 @@ const List: React.FC = () => {
                         </td>
                         <td>{item?.npo_id?.organization_name || "N/A"}</td>
                         <td>{item?.address || "N/A"}</td>
-                        <td className="text-center">
-                          {item.volunteers_count || "N/A"}
-                        </td>
+                        <td><AttendanceCell s={attendance[item._id]} requested={item.volunteers_count} /></td>
+                        <td><PopularityPill s={attendance[item._id]} /></td>
                         <td className="text-center">
                           {item?.is_recuring === 1
                             ? `${

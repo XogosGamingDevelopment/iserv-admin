@@ -51,6 +51,8 @@ export interface IDashboard {
   review_approval_count: number;
   cancelled_event_count: number;
   completed_event_count: number;
+  self_report_new_count?: number;
+  self_report_flagged_count?: number;
 }
 
 export interface User {

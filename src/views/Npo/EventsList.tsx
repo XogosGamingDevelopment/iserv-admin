@@ -1,3 +1,4 @@
+import { useAttendance, AttendanceCell, PopularityPill } from "../common/Attendance";
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Pagination from "../common/Pagination";
@@ -11,6 +12,8 @@ import { hasAuthorization } from "../../_helpers/hasAuthorization";
 const EventsList: React.FC<NpoEventsProps> = ({ eventtype, npoId }) => {
   const axiosInstance = useAxios();
   const [results, setResults] = useState<Events[]>([]);
+  // Asked-for vs. came, and popularity of repeating events (Nov 2026)
+  const attendance = useAttendance(results.map((e: any) => e._id));
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -96,14 +99,15 @@ const EventsList: React.FC<NpoEventsProps> = ({ eventtype, npoId }) => {
               <th className="min-w-90px">Event Time</th>
               <th className="min-w-90px">Recurring</th>
               <th className="min-w-90px">Created On</th>
-              <th className="min-w-50px">Volunteers</th>
+              <th className="min-w-150px">Came / Asked</th>
+              <th className="min-w-125px">Popularity</th>
               <th className="min-w-50px">View Details</th>
             </tr>
           </thead>
           <tbody className="fs-6">
             {!results || results.length === 0 ? (
               <tr className="text-center">
-                <td colSpan={9}>No Content Found</td>
+                <td colSpan={10}>No Content Found</td>
               </tr>
             ) : (
               results.map((item, index) => (
@@ -139,7 +143,8 @@ const EventsList: React.FC<NpoEventsProps> = ({ eventtype, npoId }) => {
                       "DD MMM YYYY, HH:mm A"
                     )}
                   </td>
-                  <td className="text-center"> {item.volunteers_count} </td>
+                  <td><AttendanceCell s={attendance[item._id]} requested={item.volunteers_count} /></td>
+                  <td><PopularityPill s={attendance[item._id]} /></td>
                   <td className="text-center">
                     {hasAuthorization("view", "student") && (
                       <TooltipWrapper title="View Details" placement="top">

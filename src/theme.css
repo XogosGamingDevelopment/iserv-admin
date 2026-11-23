@@ -629,3 +629,48 @@ html[data-bs-theme="dark"] body {
   .is-stat, .is-btn-teal, #kt_aside .is-nav-link { transition: none; }
   .is-stat:hover, .is-btn-teal:hover { transform: none; }
 }
+
+/* ---------- Nov 21: header dropdown always on top ----------
+   The header (and the profile dropdown inside it) sits above every page element; only modal dialogs (1050+) and the
+   phone sidebar drawer go over it. Maps are isolated so Leaflet's own layers (z-index up to 1000) stay inside the map. */
+#kt_header.header { z-index: 1040 !important; }
+#kt_header .menu-sub-dropdown, .menu-sub-dropdown.show, .menu-sub-dropdown.menu-dropdown { z-index: 1045 !important; }
+.drawer-overlay { z-index: 1046 !important; }
+.drawer.drawer-on { z-index: 1047 !important; }
+.is-map, .leaflet-container { isolation: isolate; position: relative; z-index: 0; }
+.sticky-table-header th { z-index: 3; }
+
+/* ---------- Projects map ---------- */
+.is-map { border: 1px solid var(--is-line); border-radius: 1.25rem; overflow: hidden; }
+.is-map .leaflet-container { background: #0b1a24; }
+.is-map-tiles { filter: brightness(0.62) invert(1) contrast(0.92) hue-rotate(195deg) saturate(0.45); }
+.is-map .leaflet-popup-content-wrapper, .is-map .leaflet-popup-tip { background: var(--is-pop); color: #e2e8f0; border: 1px solid var(--is-line); }
+.is-map .leaflet-popup-content-wrapper { border-radius: 1rem; }
+.is-map .leaflet-popup-content a { color: var(--is-teal-2); }
+.is-map .leaflet-control-zoom a { background: var(--is-pop); color: #fff; border-color: var(--is-line); }
+.is-legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 999px; margin-right: 4px; vertical-align: middle; border: 1.5px solid #fff; }
+
+/* ---------- Sidebar badge, review tabs, flags ---------- */
+#kt_aside .is-nav-badge { margin-left: auto; min-width: 1.4rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--is-amber); color: var(--is-ink); font-size: 0.72rem; font-weight: 800; text-align: center; }
+#kt_aside .is-nav-link.active .is-nav-badge { background: var(--is-ink); color: var(--is-amber); }
+.is-tab-count-alert { background: var(--is-amber) !important; color: var(--is-ink) !important; }
+.is-status-new { background: rgba(251, 191, 36, 0.18); color: #fcd34d; }
+.is-status-flag { background: rgba(255, 127, 80, 0.2); color: #ffa07a; }
+.is-report-flagged { border-color: rgba(255, 127, 80, 0.5); }
+.is-flag { background: rgba(255, 127, 80, 0.08); border-left: 3px solid var(--is-coral); border-radius: 0 0.75rem 0.75rem 0; color: #fde2d8; font-size: 0.88rem; padding: 0.6rem 0.85rem; }
+.is-flag-closed { background: rgba(255, 255, 255, 0.04); border-left-color: rgba(255, 255, 255, 0.25); color: #cbd5e1; }
+.is-inline-form { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--is-line); border-radius: 1rem; padding: 0.9rem; }
+
+/* ---------- Attendance / popularity ---------- */
+.is-pop { display: inline-block; border-radius: 999px; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; white-space: nowrap; }
+.is-pop-hot { background: rgba(251, 191, 36, 0.2); color: #fcd34d; }
+.is-pop-good { background: rgba(45, 212, 191, 0.18); color: var(--is-teal-2); }
+.is-pop-mid { background: rgba(192, 132, 252, 0.18); color: #d8b4fe; }
+.is-pop-low { background: rgba(255, 127, 80, 0.18); color: #ffa07a; }
+.is-pop-new { background: rgba(255, 255, 255, 0.08); color: #cbd5e1; }
+
+/* ---------- Photo gallery approval ---------- */
+.is-gallery-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.is-gallery-card { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--is-line); border-radius: 1.25rem; margin: 0; overflow: hidden; }
+.is-gallery-card img { aspect-ratio: 4 / 3; display: block; object-fit: cover; width: 100%; }
+.is-gallery-card figcaption { padding: 0.75rem; }
