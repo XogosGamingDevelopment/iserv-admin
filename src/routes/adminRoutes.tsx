@@ -34,6 +34,9 @@ import UserPosts from '../views/SocialMedia/PostList';
 import ArchivedRating from '../views/ArchivedRating/List';
 import OutreachOrganizations from '../views/Outreach/Organizations';
 import OutreachSchools from '../views/Outreach/Schools';
+import NonprofitDatabase from '../views/Outreach/NonprofitDatabase';
+import SchoolsDatabase from '../views/Outreach/SchoolsDatabase';
+import DripCampaigns from '../views/Outreach/DripCampaigns';
 
 // Who may open the dashboard pages. The server decides for real (middleware/adminAccess); this only keeps
 // people off pages that would refuse them. Sub-admins get everything except Admin Users.
@@ -256,6 +259,27 @@ const ClientRoutes = () => (
 		  element={
 		    <ProtectedRoute allowedRoles={ADMINS}>
 			  <OutreachSchools />
+		    </ProtectedRoute>
+		  }
+		/>
+		<Route path='/nonprofit-database'
+		  element={
+		    <ProtectedRoute allowedRoles={ADMINS}>
+			  <NonprofitDatabase />
+		    </ProtectedRoute>
+		  }
+		/>
+		<Route path='/schools-database'
+		  element={
+		    <ProtectedRoute allowedRoles={ADMINS}>
+			  <SchoolsDatabase />
+		    </ProtectedRoute>
+		  }
+		/>
+		<Route path='/drip-campaigns'
+		  element={
+		    <ProtectedRoute allowedRoles={ADMINS}>
+			  <DripCampaigns />
 		    </ProtectedRoute>
 		  }
 		/>
