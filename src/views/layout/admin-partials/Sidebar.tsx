@@ -40,6 +40,8 @@ const sections: { heading: string; items: NavItem[] }[] = [
     items: [
       { label: "Non-Profit Database", to: "/nonprofit-database", icon: "ki-handcart" },
       { label: "Schools Database", to: "/schools-database", icon: "ki-teacher", also: ["/outreach-schools"] },
+      { label: "Cities Database", to: "/cities-database", icon: "ki-tree" },
+      { label: "Churches Database", to: "/churches-database", icon: "ki-home-2" },
       { label: "Drip Campaigns", to: "/drip-campaigns", icon: "ki-sms" },
       // The approve / hold / exclude queue for researched organizations (e.g. the 170 held from the Nov 23 import).
       { label: "Review Organizations", to: "/outreach-organizations", icon: "ki-shield-tick" },

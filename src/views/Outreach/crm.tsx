@@ -46,7 +46,10 @@ export type Enrollment = {
   status: string; stop_reason?: string | null; next_due_at?: string | null; last_sent_at?: string | null;
 };
 export type Drip = { campaign: string; status: string; step: number; total: number; people: number } | null;
-export const CAMPAIGN_NAMES: Record<string, string> = { schools: "Schools campaign", nonprofits: "Nonprofit campaign" };
+export const CAMPAIGN_NAMES: Record<string, string> = { schools: "Schools campaign", nonprofits: "Nonprofit campaign", cities: "Cities campaign" };
+export const CITY_STATUSES = ["not_contacted", "contacted", "replied", "joined", "declined", "do_not_contact"];
+export const CHURCH_STATUSES = ["not_contacted", "contacted", "replied", "joined", "declined", "do_not_contact"];
+export type TargetType = "organization" | "school" | "city" | "church";
 
 /** Small "Campaign: email 2 of 4" chip for list rows. */
 export const DripChip: React.FC<{ drip: Drip }> = ({ drip }) => {
@@ -118,7 +121,7 @@ export const Field: React.FC<{ k: string; children: React.ReactNode }> = ({ k, c
 const METHODS = [["email", "Email"], ["phone", "Phone call"], ["meeting", "Meeting / video call"], ["visit", "In-person visit"], ["mail", "Letter / flyer"], ["social", "Social media"], ["other", "Other"]];
 
 export const ContactLog: React.FC<{
-  axios: any; targetType: "organization" | "school"; targetId: string; contacts: Contact[];
+  axios: any; targetType: TargetType; targetId: string; contacts: Contact[];
   statuses: string[]; currentStatus: string; people?: { email: string; name: string | null; role: string }[];
   onChange: (contacts: Contact[], record?: any) => void;
 }> = ({ axios, targetType, targetId, contacts, statuses, currentStatus, people = [], onChange }) => {
@@ -240,7 +243,7 @@ export const ContactLog: React.FC<{
 /* ---------------------------------------------------------------- campaign panel */
 
 export const CampaignPanel: React.FC<{
-  axios: any; campaign: "schools" | "nonprofits"; targetId: string; enrollments: Enrollment[]; people: { email: string; name: string | null; role: string }[];
+  axios: any; campaign: "schools" | "nonprofits" | "cities"; targetId: string; enrollments: Enrollment[]; people: { email: string; name: string | null; role: string }[];
   blocked?: string | null; viaSchool?: string | null; onChange: () => void;
 }> = ({ axios, campaign, targetId, enrollments, people, blocked, viaSchool, onChange }) => {
   const [busy, setBusy] = useState(false);

@@ -13,6 +13,7 @@ import {
   fmtDate, href, label, statusBadge,
 } from "./crm";
 import { NonprofitPopup } from "./NonprofitDatabase";
+import { CityPopup } from "./CitiesDatabase";
 
 type School = {
   _id: string; name: string; district?: string | null; type?: string; address?: string | null; city?: string | null; county?: string | null; state: string; region: string;
@@ -95,6 +96,59 @@ const NearbyNonprofits: React.FC<{ axios: any; school: School; onOpen: (id: stri
   );
 };
 
+/* ---------------------------------------------------------------- cities near an interested school */
+
+type NearbyCity = { _id: string; name: string; department_name?: string | null; email?: string | null; email2?: string | null; outreach_status: string; miles: number; drip?: Drip };
+
+const NearbyCities: React.FC<{ axios: any; school: School; onOpen: (id: string) => void; refreshKey: number }> = ({ axios, school, onOpen, refreshKey }) => {
+  const [rows, setRows] = useState<NearbyCity[] | null>(null);
+  const [located, setLocated] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(async () => {
+    try {
+      const res: any = await axios({ url: `outreach/schools/${school._id}/nearby-cities`, method: "GET" });
+      setRows(res?.data?.cities ?? []);
+      setLocated(res?.data?.school_located !== false);
+    } catch (e) { console.error("nearby cities", e); setRows([]); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [school._id]);
+  useEffect(() => { load(); }, [load, refreshKey]);
+
+  const eligible = (rows ?? []).filter((c) => (c.email || c.email2) && ["not_contacted", "contacted"].includes(c.outreach_status) && !c.drip);
+  const enrollAll = async () => {
+    if (!window.confirm(`Start the cities campaign for ${eligible.length} Parks & Recreation department${eligible.length === 1 ? "" : "s"} near ${school.name}?`)) return;
+    setBusy(true);
+    try {
+      await axios({ url: "outreach/drip/enroll", method: "POST", data: { campaign: "cities", via_school: school._id } });
+      load();
+    } catch (e) { console.error("enroll cities", e); } finally { setBusy(false); }
+  };
+
+  if (!rows) return <div className="text-muted fs-7">Finding cities nearby…</div>;
+  return (
+    <div>
+      <div className="d-flex flex-wrap gap-3 align-items-center mb-3">
+        <div className="text-muted fs-7">{rows.length} cit{rows.length === 1 ? "y" : "ies"} with a parks contact within 5 miles{located ? "" : " (this school has no map position yet, so only its own city is matched)"}.</div>
+        {eligible.length ? <button className="btn btn-sm btn-primary ms-auto" disabled={busy} onClick={enrollAll}>Start cities campaign for {eligible.length}</button> : null}
+      </div>
+      {rows.length ? (
+        <table className="table table-sm table-row-dashed table-hover fs-7 mb-0">
+          <thead><tr className="fw-bold text-muted"><th>City</th><th>Distance</th><th>Status</th></tr></thead>
+          <tbody>
+            {rows.map((c) => (
+              <tr key={c._id} role="button" onClick={() => onOpen(c._id)}>
+                <td><div className="fw-semibold">{c.name}</div><div className="text-muted fs-8">{c.department_name || "Parks & Recreation"}{c.email || c.email2 ? "" : " · no email"}</div></td>
+                <td>{c.miles === 0 ? "In the city" : `${c.miles} mi`}</td>
+                <td><span className={`badge ${statusBadge[c.outreach_status] ?? "badge-light"}`}>{label(c.outreach_status)}</span> <DripChip drip={c.drip ?? null} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : null}
+    </div>
+  );
+};
+
 /* ---------------------------------------------------------------- pop-up */
 
 const SchoolPopup: React.FC<{ id: string; onClose: (changed: boolean) => void }> = ({ id, onClose }) => {
@@ -106,6 +160,7 @@ const SchoolPopup: React.FC<{ id: string; onClose: (changed: boolean) => void }>
   const [notes, setNotes] = useState("");
   const [changed, setChanged] = useState(false);
   const [orgOpen, setOrgOpen] = useState<string | null>(null);
+  const [cityOpen, setCityOpen] = useState<string | null>(null);
   const [nearbyKey, setNearbyKey] = useState(0);
 
   const load = useCallback(async () => {
@@ -175,6 +230,9 @@ const SchoolPopup: React.FC<{ id: string; onClose: (changed: boolean) => void }>
                   <div className="fw-bold fs-5 mb-1">Nonprofits near this school</div>
                   <div className="text-muted fs-7 mb-3">{school.name} wants to use iServ. Invite the nonprofits around it to post more projects for its students.</div>
                   <NearbyNonprofits axios={axios} school={school} onOpen={setOrgOpen} refreshKey={nearbyKey} />
+                  <div className="fw-bold fs-5 mt-5 mb-1">City Parks & Recreation within 5 miles</div>
+                  <div className="text-muted fs-7 mb-3">The cities campaign tells each city that {school.name} has signed up and asks it to post its volunteer projects.</div>
+                  <NearbyCities axios={axios} school={school} onOpen={setCityOpen} refreshKey={nearbyKey} />
                 </div>
               ) : null}
 
@@ -198,6 +256,7 @@ const SchoolPopup: React.FC<{ id: string; onClose: (changed: boolean) => void }>
         )}
       </Modal>
       {orgOpen ? <NonprofitPopup id={orgOpen} viaSchool={id} onClose={(c) => { setOrgOpen(null); if (c) setNearbyKey((k) => k + 1); }} /> : null}
+      {cityOpen ? <CityPopup id={cityOpen} viaSchool={id} onClose={(c) => { setCityOpen(null); if (c) setNearbyKey((k) => k + 1); }} /> : null}
     </>
   );
 };

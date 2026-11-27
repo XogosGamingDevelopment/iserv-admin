@@ -1,6 +1,7 @@
-// Drip Campaigns (Nov 24, 2026). Two email sequences (backend configs/dripCampaigns.ts):
+// Drip Campaigns (Nov 24, 2026). Three email sequences (backend configs/dripCampaigns.ts):
 //   1. Schools: introduce iServ to high schools.
 //   2. Nonprofits: when a school wants iServ (status Interested / Partnered), invite the nonprofits in its county.
+//   3. Cities (Nov 25): the same trigger invites the Parks & Recreation departments of cities within 5 miles.
 // iServ does not send these. Each day the admin exports the emails that are due, sends them from a Google Workspace
 // inbox (mail merge such as YAMM / GMass / Mailmeteor, or one at a time in Gmail), and marks them sent here. Never send
 // cold outreach through AWS SES: it carries iServ's sign-up and password emails.
@@ -13,13 +14,18 @@ import ContentLoader from "../common/ContentLoader";
 import { Modal, STATES, fmtDate, label, statusBadge } from "./crm";
 
 type Step = { number: number; wait_days: number; subject: string; waiting: number };
-type Campaign = { key: "schools" | "nonprofits"; name: string; audience: string; description: string; steps: Step[]; counts: Record<string, number> };
+type Campaign = { key: "schools" | "nonprofits" | "cities"; name: string; audience: string; description: string; steps: Step[]; counts: Record<string, number> };
 type Settings = { sender_name: string; sender_title: string; sender_email: string; organization_line: string; website: string; postal_address: string; daily_limit: number };
 type DueItem = {
   id: string; step: number; step_number: number; total_steps: number; to_email: string; to_name?: string | null; to_role?: string | null;
   target_id: string; target_name: string; city?: string | null; state: string; subject: string; body_text: string; body_html: string;
 };
-type InterestedSchool = { _id: string; name: string; district?: string | null; city?: string | null; state: string; area: string; outreach_status: string; nonprofits_enrolled: number };
+type InterestedSchool = {
+  _id: string; name: string; district?: string | null; city?: string | null; state: string; area: string; outreach_status: string; nonprofits_enrolled: number;
+  cities_near?: number; cities_near_with_email?: number; cities_near_names?: string[]; cities_enrolled?: number;
+};
+const TAB_LABEL: Record<string, string> = { schools: "1 · Schools", nonprofits: "2 · Nonprofits", cities: "3 · Cities" };
+const TARGET_LABEL: Record<string, string> = { schools: "School", nonprofits: "Nonprofit", cities: "City" };
 type EnrollmentRow = {
   _id: string; campaign: string; to_email: string; to_name?: string | null; to_role?: string | null; step: number; total_steps: number; status: string;
   stop_reason?: string | null; next_due_at?: string | null; last_sent_at?: string | null; target_name: string; target_place: string; via_school_name?: string | null;
@@ -92,7 +98,7 @@ const DripCampaigns: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [interested, setInterested] = useState<InterestedSchool[]>([]);
-  const [tab, setTab] = useState<"schools" | "nonprofits">("schools");
+  const [tab, setTab] = useState<"schools" | "nonprofits" | "cities">("schools");
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<{ step: number; email?: any } | null>(null);
   // Due now
@@ -166,6 +172,13 @@ const DripCampaigns: React.FC = () => {
       refreshAll();
     } catch (e) { console.error("enroll schools", e); }
   };
+  const enrollCities = async (s: InterestedSchool) => {
+    if (!window.confirm(`Start the cities campaign for the Parks & Recreation departments within 5 miles of ${s.name}?`)) return;
+    try {
+      await axios({ url: "outreach/drip/enroll", method: "POST", data: { campaign: "cities", via_school: s._id }, timeout: 60000 });
+      refreshAll();
+    } catch (e) { console.error("enroll cities", e); }
+  };
   const enrollNear = async (s: InterestedSchool) => {
     if (!window.confirm(`Start the nonprofit campaign for the nonprofits in ${s.area} (near ${s.name})?`)) return;
     try {
@@ -202,6 +215,7 @@ const DripCampaigns: React.FC = () => {
             <li><b>Schools:</b> add the schools of a state (or one county) to the schools campaign. Each gets four emails over about three weeks about iServ, the verified Service Certificate and how staff track hours.</li>
             <li><b>Every day:</b> open <i>Due now</i>, download the CSV and send it with a mail merge from your Google Workspace inbox (YAMM, GMass or Mailmeteor), or send one at a time with <i>Open in Gmail</i>. Then click <i>Mark sent</i>. The next email comes due a few days later.</li>
             <li><b>When a school says yes:</b> set it to <i>Interested</i> or <i>Partnered</i> in the Schools Database. Its emails stop, and the nonprofit campaign can start for the nonprofits in its county, inviting them to post more projects for its students.</li>
+            <li><b>Cities:</b> the same school also unlocks the cities campaign for the Parks & Recreation departments within 5 miles (Cities Database). Those emails say the school has already signed up, so the city knows students nearby are waiting for its projects.</li>
           </ol>
           <div className="text-muted fs-7">Anyone you mark Replied, Joined, Declined or Do not contact stops getting campaign emails. If someone replies "unsubscribe", set them to Do not contact. Don't send these through iServ's own mail service (AWS SES): it carries sign-up and password emails and can be paused by complaints.</div>
         </div>
@@ -211,7 +225,7 @@ const DripCampaigns: React.FC = () => {
         <div className="is-tabs mb-5" role="tablist">
           {campaigns.map((x) => (
             <button key={x.key} type="button" role="tab" aria-selected={tab === x.key} className={`is-tab ${tab === x.key ? "active" : ""}`} onClick={() => { setTab(x.key); setPeoplePage(1); }}>
-              {x.key === "schools" ? "1 · Schools" : "2 · Nonprofits"} <span className="is-tab-count">{x.counts.due ?? 0} due</span>
+              {TAB_LABEL[x.key] ?? x.name} <span className="is-tab-count">{x.counts.due ?? 0} due</span>
             </button>
           ))}
         </div>
@@ -266,6 +280,31 @@ const DripCampaigns: React.FC = () => {
                     <button className="btn btn-sm btn-primary" disabled={!addState} onClick={enrollSchools}>Add to schools campaign</button>
                   </div>
                 </>
+              ) : tab === "cities" ? (
+                <>
+                  <div className="fw-bold fs-5 mb-1">Cities near schools that signed up</div>
+                  <div className="text-muted fs-7 mb-3">For each school marked Interested or Partnered: the cities within 5 miles that have a Parks & Recreation contact. The emails name the school. Single cities can also be added from the Cities Database. An address already getting the nonprofit campaign is skipped, so nobody gets both.</div>
+                  {!interested.length ? (
+                    <div className="text-muted fs-7">No school is marked Interested or Partnered yet. When one says yes, set its status in the Schools Database.</div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table table-row-dashed align-middle fs-6 mb-0">
+                        <thead><tr className="fw-bold text-muted text-uppercase fs-8"><th>School</th><th>Cities within 5 miles</th><th className="text-center">With an email</th><th className="text-center">Cities added</th><th></th></tr></thead>
+                        <tbody>
+                          {interested.map((s) => (
+                            <tr key={s._id}>
+                              <td><div className="fw-bold">{s.name}</div><div className="text-muted fs-8">{[s.city, s.state].filter(Boolean).join(", ")}</div></td>
+                              <td className="fs-7">{s.cities_near ? <>{(s.cities_near_names ?? []).join(", ")}{(s.cities_near ?? 0) > (s.cities_near_names ?? []).length ? ` and ${(s.cities_near ?? 0) - (s.cities_near_names ?? []).length} more` : ""}</> : <span className="text-muted">None in the Cities Database</span>}</td>
+                              <td className="text-center">{s.cities_near_with_email ?? 0}</td>
+                              <td className="text-center">{s.cities_enrolled ?? 0}</td>
+                              <td className="text-end">{s.cities_near_with_email ? <button className="btn btn-sm btn-primary" onClick={() => enrollCities(s)}>{s.cities_enrolled ? "Add any new cities" : "Start for cities nearby"}</button> : null}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   <div className="fw-bold fs-5 mb-1">Schools that want iServ</div>
@@ -317,7 +356,7 @@ const DripCampaigns: React.FC = () => {
                   </div>
                   <div className="table-responsive" style={{ maxHeight: 520, overflowY: "auto" }}>
                     <table className="table table-sm table-row-dashed align-middle fs-7 mb-0">
-                      <thead><tr className="fw-bold text-muted"><th></th><th>To</th><th>{tab === "schools" ? "School" : "Nonprofit"}</th><th>Email</th><th>Subject</th><th></th></tr></thead>
+                      <thead><tr className="fw-bold text-muted"><th></th><th>To</th><th>{TARGET_LABEL[tab]}</th><th>Email</th><th>Subject</th><th></th></tr></thead>
                       <tbody>
                         {due.map((i) => (
                           <tr key={i.id}>
@@ -353,7 +392,7 @@ const DripCampaigns: React.FC = () => {
               {!people.length ? <div className="text-muted fs-7">Nobody yet.</div> : (
                 <div className="table-responsive">
                   <table className="table table-sm table-row-dashed align-middle fs-7 mb-0">
-                    <thead><tr className="fw-bold text-muted"><th>Person</th><th>{tab === "schools" ? "School" : "Nonprofit"}</th><th>Progress</th><th>Next email</th><th></th></tr></thead>
+                    <thead><tr className="fw-bold text-muted"><th>Person</th><th>{TARGET_LABEL[tab]}</th><th>Progress</th><th>Next email</th><th></th></tr></thead>
                     <tbody>
                       {people.map((e) => (
                         <tr key={e._id}>
@@ -389,7 +428,7 @@ const DripCampaigns: React.FC = () => {
       </div>
 
       {preview ? (
-        <Modal size="lg" onClose={() => setPreview(null)} title={`${campaign?.name ?? ""}: email ${preview.step}`} subtitle="Filled in with sample details. Real emails use each school's or nonprofit's own names and counts.">
+        <Modal size="lg" onClose={() => setPreview(null)} title={`${campaign?.name ?? ""}: email ${preview.step}`} subtitle="Filled in with sample details. Real emails use each school's, nonprofit's or city's own names and counts.">
           {!preview.email ? <div className="text-muted">Loading…</div> : (
             <>
               <div className="mb-3"><span className="text-muted fs-8 text-uppercase fw-bold">Subject</span><div className="fw-bold fs-5">{preview.email.subject}</div></div>
