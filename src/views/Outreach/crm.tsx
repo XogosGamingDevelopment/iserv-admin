@@ -304,3 +304,102 @@ export const CampaignPanel: React.FC<{
     </div>
   );
 };
+
+/* ---------------------------------------------------------------- mailing address (Nov 27, 2026) */
+
+// For the Cities and Churches Databases: organizations with no email, phone or contact page can be reached by mail.
+// Cities: the city / town government's address (Census Bureau, 2022 list of local governments). Churches: the mailing
+// address the church gave the IRS, else its street address.
+export type Mailing = {
+  mailing_name?: string | null; mailing_attn?: string | null; mailing_address?: string | null; mailing_address2?: string | null;
+  mailing_city?: string | null; mailing_state?: string | null; mailing_zip?: string | null; mailing_source?: string | null;
+};
+export const MAILING_SOURCE: Record<string, string> = {
+  census_govts_2022: "Census Bureau list of local governments (2022)",
+  irs: "IRS exempt-organization list (the church's mailing address)",
+  street: "Street address on file",
+  "street+census_geocoder": "Street address on file (ZIP from the Census geocoder)",
+};
+/** The envelope lines: name, Attn, street, suite, "City, ST ZIP". */
+export const mailingLines = (m: Mailing & { name?: string }) =>
+  !m.mailing_address ? [] : [
+    m.mailing_name || m.name || "",
+    m.mailing_attn ? `Attn: ${m.mailing_attn}` : "",
+    m.mailing_address,
+    m.mailing_address2 || "",
+    `${m.mailing_city || ""}, ${m.mailing_state || ""} ${m.mailing_zip || ""}`.trim(),
+  ].filter(Boolean);
+
+const MAIL_KEYS = ["mailing_attn", "mailing_address", "mailing_address2", "mailing_city", "mailing_zip"] as const;
+/** Mailing address block for a pop-up, with an Edit form. `save` PATCHes the record and resolves true when saved. */
+export const MailingEditor: React.FC<{ record: Mailing & { name: string }; save: (data: any) => Promise<boolean> }> = ({ record, save }) => {
+  const pick = () => Object.fromEntries(MAIL_KEYS.map((k) => [k, record[k] ?? ""])) as Record<string, string>;
+  const [edit, setEdit] = useState(false);
+  const [form, setForm] = useState(pick);
+  const [busy, setBusy] = useState(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setForm(pick()); }, [record]);
+  const lines = mailingLines(record);
+  const box = { background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)" };
+  const input = (k: string, ph: string, cls: string) => (
+    <div className={cls}><input className="form-control form-control-sm" placeholder={ph} value={form[k] ?? ""} onChange={(e) => setForm({ ...form, [k]: e.target.value })} /></div>
+  );
+  return (
+    <div className="rounded p-3 mb-4" style={box}>
+      <div className="d-flex align-items-center mb-2">
+        <div className="text-muted fs-8 text-uppercase fw-bold">Mailing address</div>
+        {!edit ? <button className="btn btn-sm btn-link p-0 ms-auto fs-8" onClick={() => setEdit(true)}>{lines.length ? "Edit" : "Add"}</button> : null}
+      </div>
+      {!edit ? (
+        lines.length ? (
+          <>
+            <div className="fs-7" style={{ whiteSpace: "pre-line" }}>{lines.join("\n")}</div>
+            {record.mailing_source ? <div className="text-muted fs-8 mt-1">From: {MAILING_SOURCE[record.mailing_source] ?? record.mailing_source}</div> : null}
+          </>
+        ) : <span className="text-muted fs-7">No mailing address on file</span>
+      ) : (
+        <div className="row g-2">
+          {input("mailing_attn", "Attn: (person or office)", "col-12")}
+          {input("mailing_address", "Street or PO Box", "col-12")}
+          {input("mailing_address2", "Suite / unit (optional)", "col-12")}
+          {input("mailing_city", "City", "col-7")}
+          {input("mailing_zip", "ZIP", "col-5")}
+          <div className="col-12 d-flex gap-2">
+            <button className="btn btn-sm btn-primary" disabled={busy} onClick={async () => { setBusy(true); const ok = await save(form); setBusy(false); if (ok) setEdit(false); }}>Save</button>
+            <button className="btn btn-sm btn-light" onClick={() => { setForm(pick()); setEdit(false); }}>Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Downloads the filtered list's mailing addresses as a CSV for a mail merge or label printing
+ * (GET outreach/<cities|churches>/mailing-list with the page's filters). Returns a message for the page.
+ */
+export async function downloadMailingList(axios: any, kind: "cities" | "churches", filters: Record<string, string>, fileName: string): Promise<string> {
+  const params: any = {};
+  for (const [k, v] of Object.entries(filters)) if (v) params[k] = v;
+  const res: any = await axios({ url: `outreach/${kind}/mailing-list`, method: "GET", params });
+  const rows: any[] = res?.data?.rows ?? [];
+  if (!rows.length) return "No one in this list has a mailing address.";
+  const cell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const head = kind === "cities"
+    ? ["Name", "Attn", "Address", "Address 2", "City", "State", "ZIP", "City (iServ)", "County", "Outreach status", "Address source"]
+    : ["Name", "Attn", "Address", "Address 2", "City", "State", "ZIP", "Church (iServ)", "Denomination", "County", "Outreach status", "Address source"];
+  const lines = [head.map(cell).join(",")].concat(rows.map((r) => {
+    const base = [r.mailing_name || r.name, r.mailing_attn, r.mailing_address, r.mailing_address2, r.mailing_city, r.mailing_state, r.mailing_zip];
+    const more = kind === "cities" ? [r.name, r.county, label(r.outreach_status), r.mailing_source] : [r.name, r.denomination, r.county, label(r.outreach_status), r.mailing_source];
+    return [...base, ...more].map(cell).join(",");
+  }));
+  const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  return `Downloaded ${rows.length.toLocaleString()} mailing address${rows.length === 1 ? "" : "es"}${res?.data?.truncated ? " (the first 60,000; narrow the filters for the rest)" : ""}. After mailing, log a "Letter / flyer" contact or set the status to Contacted.`;
+}

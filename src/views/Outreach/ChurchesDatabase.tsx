@@ -7,9 +7,9 @@ import React, { useCallback, useEffect, useState } from "react";
 import useAxios from "../../hooks/useAxios";
 import { PageToolbar } from "../common";
 import ContentLoader from "../common/ContentLoader";
-import { CHURCH_STATUSES, Contact, ContactLog, Field, Modal, STATES, STATUS_HINT, fmtDate, href, label, statusBadge } from "./crm";
+import { CHURCH_STATUSES, Contact, ContactLog, Field, Mailing, MailingEditor, Modal, STATES, STATUS_HINT, downloadMailingList, fmtDate, href, label, statusBadge } from "./crm";
 
-type Church = {
+type Church = Mailing & {
   _id: string; name: string; religion: string; denomination?: string | null; address?: string | null; city?: string | null; county?: string | null;
   state: string; zip?: string | null; lat?: number | null; lng?: number | null; phone?: string | null; website?: string | null;
   contact_page_url?: string | null; contact_page_form?: boolean | null;
@@ -17,7 +17,7 @@ type Church = {
   contact_locked?: boolean; ein?: string | null; osm_id?: string | null; sources?: string[];
   outreach_status: string; contacted_at?: string | null; notes?: string | null; contact_count?: number; last_contact_at?: string | null;
 };
-type Facets = { religion: { _id: string; n: number }[]; denomination: { _id: string | null; n: number }[]; county: { _id: string | null; n: number }[]; totals: { n: number; with_email: number; with_website: number; with_phone: number; with_contact_page?: number } };
+type Facets = { religion: { _id: string; n: number }[]; denomination: { _id: string | null; n: number }[]; county: { _id: string | null; n: number }[]; totals: { n: number; with_email: number; with_website: number; with_phone: number; with_contact_page?: number; with_mailing?: number; mail_only?: number } };
 
 const SOURCE: Record<string, string> = { osm: "OpenStreetMap", irs: "IRS exempt-organization list" };
 const countyLabel = (c?: string | null) => (!c ? "" : /county|city$/i.test(c) ? c : `${c} County`);
@@ -49,12 +49,13 @@ const ChurchPopup: React.FC<{ id: string; onClose: (changed: boolean) => void }>
   }, [id]);
   useEffect(() => { load(); }, [load]);
 
-  const patch = async (data: any) => {
+  const patch = async (data: any): Promise<boolean> => {
     setBusy(true);
     try {
       const res: any = await axios({ url: `outreach/churches/${id}`, method: "PATCH", data });
-      if (res?.data?.church) { setChurch(res.data.church); fill(res.data.church); setChanged(true); load(); }
+      if (res?.data?.church) { setChurch(res.data.church); fill(res.data.church); setChanged(true); load(); return true; }
     } catch (e) { console.error("save church", e); } finally { setBusy(false); }
+    return false;
   };
   const dirty = church ? Object.keys(form).some((k) => (form[k] ?? "") !== ((church as any)[k] ?? "")) : false;
   const input = (k: string, ph: string, type = "text", cls = "col-6") => (
@@ -79,6 +80,7 @@ const ChurchPopup: React.FC<{ id: string; onClose: (changed: boolean) => void }>
             <Field k="Address">{[church.address, church.city, church.state, church.zip].filter(Boolean).join(", ") || null}</Field>
             <Field k="Map">{map ? <a href={map} target="_blank" rel="noopener noreferrer">Open in Google Maps</a> : null}</Field>
             <Field k="Found in">{(church.sources ?? []).map((s) => SOURCE[s] ?? s).join(" and ")}{church.ein ? ` · EIN ${church.ein}` : ""}</Field>
+            <MailingEditor record={church} save={patch} />
 
             <div className="rounded p-3 mb-4" style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)" }}>
               <div className="text-muted fs-8 text-uppercase fw-bold mb-2">Contact</div>
@@ -134,13 +136,15 @@ const ChurchPopup: React.FC<{ id: string; onClose: (changed: boolean) => void }>
 
 const ChurchesDatabase: React.FC = () => {
   const axiosInstance = useAxios();
-  const [filters, setFilters] = useState({ state: "MO", religion: "", denomination: "", county: "", outreach_status: "", has_email: "", has_website: "", has_contact_page: "", search: "" });
+  const [filters, setFilters] = useState({ state: "MO", religion: "", denomination: "", county: "", outreach_status: "", has_email: "", has_website: "", has_contact_page: "", mail_only: "", search: "" });
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState<Church[]>([]);
   const [total, setTotal] = useState(0);
   const [facets, setFacets] = useState<Facets | null>(null);
   const [loading, setLoading] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [mailMsg, setMailMsg] = useState("");
+  const [mailBusy, setMailBusy] = useState(false);
   const limit = 50;
 
   useEffect(() => {
@@ -173,7 +177,13 @@ const ChurchesDatabase: React.FC = () => {
     return () => window.clearTimeout(t);
   }, [load, filters.search]);
 
-  const setFilter = (k: keyof typeof filters, v: string) => { setPage(1); setFilters((f) => ({ ...f, [k]: v, ...(k === "state" ? { county: "" } : {}) })); };
+  const downloadMail = async () => {
+    setMailBusy(true); setMailMsg("");
+    try { setMailMsg(await downloadMailingList(axiosInstance, "churches", filters, `churches-mailing-list-${filters.state || "all"}${filters.county ? "-" + filters.county.replace(/W+/g, "-") : ""}.csv`)); }
+    catch (e) { console.error("mailing list", e); setMailMsg("Couldn't build the mailing list. Try again."); }
+    finally { setMailBusy(false); }
+  };
+  const setFilter = (k: keyof typeof filters, v: string) => { setPage(1); setMailMsg(""); setFilters((f) => ({ ...f, [k]: v, ...(k === "state" ? { county: "" } : {}) })); };
   const pages = Math.max(1, Math.ceil(total / limit));
   const t = facets?.totals;
 
@@ -188,6 +198,7 @@ const ChurchesDatabase: React.FC = () => {
             <div className="is-stat"><div className="is-stat-value">{t.with_website.toLocaleString()}</div><div className="is-stat-label">With a website</div></div>
             <div className="is-stat"><div className="is-stat-value">{t.with_email.toLocaleString()}</div><div className="is-stat-label">With an email</div></div>
             {t.with_contact_page ? <div className="is-stat"><div className="is-stat-value">{t.with_contact_page.toLocaleString()}</div><div className="is-stat-label">With a contact page</div></div> : null}
+            {t.mail_only ? <div className="is-stat"><div className="is-stat-value">{t.mail_only.toLocaleString()}</div><div className="is-stat-label">Reachable by mail only</div></div> : null}
           </div>
         ) : null}
         <div className="card card-body mb-5 py-4">
@@ -224,9 +235,15 @@ const ChurchesDatabase: React.FC = () => {
               <input className="form-check-input" type="checkbox" checked={filters.has_contact_page === "1"} onChange={(e) => setFilter("has_contact_page", e.target.checked ? "1" : "")} />
               <span className="form-check-label">Has a contact page</span>
             </label>
+            <label className="form-check form-check-sm form-check-custom mb-0" title="No email, phone or contact page, but a mailing address">
+              <input className="form-check-input" type="checkbox" checked={filters.mail_only === "1"} onChange={(e) => setFilter("mail_only", e.target.checked ? "1" : "")} />
+              <span className="form-check-label">Mail only</span>
+            </label>
             <input className="form-control form-control-sm w-250px" placeholder="Search name, city, address or contact" value={filters.search} onChange={(e) => setFilter("search", e.target.value)} />
             <span className="ms-auto text-muted fs-7">{total.toLocaleString()} congregations</span>
+            <button className="btn btn-sm btn-light" disabled={mailBusy} onClick={downloadMail} title="The mailing addresses of the congregations in this list, as a CSV for a mail merge or labels">{mailBusy ? "Building…" : "Download mailing list"}</button>
           </div>
+          {mailMsg ? <div className="text-muted fs-7 mt-2">{mailMsg}</div> : null}
         </div>
 
         <div className={`card ${loading ? "overlay overlay-block" : ""}`}>
@@ -250,7 +267,7 @@ const ChurchesDatabase: React.FC = () => {
                         {c.email ? <div>{c.email}</div> : null}
                         {c.phone ? <div className="text-muted fs-8">{c.phone}</div> : null}
                         {!c.email && c.contact_page_url ? <div className="text-muted fs-8">Contact page{c.contact_page_form ? " (form)" : ""}</div> : null}
-                        {!c.email && !c.phone && !c.contact_page_url ? (c.website ? <span className="text-muted fs-8">Website only</span> : <span className="text-muted">—</span>) : null}
+                        {!c.email && !c.phone && !c.contact_page_url ? (c.mailing_address ? <span className="text-muted fs-8">Mail only</span> : c.website ? <span className="text-muted fs-8">Website only</span> : <span className="text-muted">—</span>) : null}
                       </td>
                       <td><span className={`badge ${statusBadge[c.outreach_status] ?? "badge-light"}`}>{label(c.outreach_status)}</span></td>
                       <td className="pe-6 fs-7">{c.last_contact_at ? <>{fmtDate(c.last_contact_at)}<div className="text-muted fs-8">{c.contact_count} logged</div></> : <span className="text-muted">Never</span>}</td>

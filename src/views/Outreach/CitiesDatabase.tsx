@@ -8,11 +8,11 @@ import useAxios from "../../hooks/useAxios";
 import { PageToolbar } from "../common";
 import ContentLoader from "../common/ContentLoader";
 import {
-  CampaignPanel, CITY_STATUSES, Contact, ContactLog, Drip, DripChip, Enrollment, Field, Modal, STATES, STATUS_HINT,
-  fmtDate, href, label, statusBadge,
+  CampaignPanel, CITY_STATUSES, Contact, ContactLog, Drip, DripChip, Enrollment, Field, Mailing, MailingEditor, Modal, STATES, STATUS_HINT,
+  downloadMailingList, fmtDate, href, label, statusBadge,
 } from "./crm";
 
-type City = {
+type City = Mailing & {
   _id: string; name: string; state: string; county?: string | null; population?: number | null;
   has_department: string; department_name?: string | null; website?: string | null; volunteer_page_url?: string | null;
   contact_page_url?: string | null; contact_page_form?: boolean | null;
@@ -145,6 +145,7 @@ export const CityPopup: React.FC<{ id: string; onClose: (changed: boolean) => vo
             <Field k="Volunteer page">{city.volunteer_page_url ? <a href={href(city.volunteer_page_url)} target="_blank" rel="noopener noreferrer">{city.volunteer_page_url}</a> : null}</Field>
             <Field k="Contact page">{city.contact_page_url ? <><a href={href(city.contact_page_url)} target="_blank" rel="noopener noreferrer">{city.contact_page_url}</a>{city.contact_page_form ? <span className="badge badge-light ms-2">Message form</span> : null}</> : null}</Field>
             <Field k="Address">{city.address}</Field>
+            <MailingEditor record={city} save={patch} />
             <Field k="Also in the Non-Profit Database">{org ? <>{org.name} <span className="text-muted fs-8">({label(org.outreach_status)})</span></> : null}</Field>
             <div className="mb-4"><ContactEditor city={city} save={patch} /></div>
             <div className="mb-3">
@@ -205,11 +206,13 @@ export const CityPopup: React.FC<{ id: string; onClose: (changed: boolean) => vo
 
 const CitiesDatabase: React.FC = () => {
   const axiosInstance = useAxios();
-  const [filters, setFilters] = useState({ state: "MO", department: "any", outreach_status: "", search: "", has_email: "", has_contact_page: "", near_signed_up: "" });
+  const [filters, setFilters] = useState({ state: "MO", department: "any", outreach_status: "", search: "", has_email: "", has_contact_page: "", mail_only: "", near_signed_up: "" });
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState<City[]>([]);
   const [total, setTotal] = useState(0);
-  const [summary, setSummary] = useState<{ _id: string; n: number; with_department: number; with_email: number; with_contact_page?: number }[]>([]);
+  const [summary, setSummary] = useState<{ _id: string; n: number; with_department: number; with_email: number; with_contact_page?: number; with_mailing?: number; mail_only?: number }[]>([]);
+  const [mailMsg, setMailMsg] = useState("");
+  const [mailBusy, setMailBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const limit = 50;
@@ -235,9 +238,16 @@ const CitiesDatabase: React.FC = () => {
     return () => window.clearTimeout(t);
   }, [load, filters.search]);
 
-  const setFilter = (k: keyof typeof filters, v: string) => { setPage(1); setFilters((f) => ({ ...f, [k]: v })); };
+  // "Mail only" cities mostly have no parks department on file (no website to check), so it looks at every city.
+  const setFilter = (k: keyof typeof filters, v: string) => { setPage(1); setMailMsg(""); setFilters((f) => ({ ...f, [k]: v, ...(k === "mail_only" && v && f.department === "any" ? { department: "" } : {}) })); };
+  const downloadMail = async () => {
+    setMailBusy(true); setMailMsg("");
+    try { setMailMsg(await downloadMailingList(axiosInstance, "cities", filters, `cities-mailing-list-${filters.state || "all"}.csv`)); }
+    catch (e) { console.error("mailing list", e); setMailMsg("Couldn't build the mailing list. Try again."); }
+    finally { setMailBusy(false); }
+  };
   const pages = Math.max(1, Math.ceil(total / limit));
-  const st = summary.find((s) => s._id === filters.state) || (filters.state ? null : summary.reduce((a, s) => ({ _id: "", n: a.n + s.n, with_department: a.with_department + s.with_department, with_email: a.with_email + s.with_email, with_contact_page: (a.with_contact_page ?? 0) + (s.with_contact_page ?? 0) }), { _id: "", n: 0, with_department: 0, with_email: 0, with_contact_page: 0 }));
+  const st = summary.find((s) => s._id === filters.state) || (filters.state ? null : summary.reduce((a, s) => ({ _id: "", n: a.n + s.n, with_department: a.with_department + s.with_department, with_email: a.with_email + s.with_email, with_contact_page: (a.with_contact_page ?? 0) + (s.with_contact_page ?? 0), with_mailing: (a.with_mailing ?? 0) + (s.with_mailing ?? 0), mail_only: (a.mail_only ?? 0) + (s.mail_only ?? 0) }), { _id: "", n: 0, with_department: 0, with_email: 0, with_contact_page: 0, with_mailing: 0, mail_only: 0 }));
 
   return (
     <>
@@ -249,6 +259,7 @@ const CitiesDatabase: React.FC = () => {
             <div className="is-stat"><div className="is-stat-value">{st.with_department.toLocaleString()}</div><div className="is-stat-label">With a parks department</div></div>
             <div className="is-stat"><div className="is-stat-value">{st.with_email.toLocaleString()}</div><div className="is-stat-label">With a contact email</div></div>
             {st.with_contact_page ? <div className="is-stat"><div className="is-stat-value">{st.with_contact_page.toLocaleString()}</div><div className="is-stat-label">With a contact page</div></div> : null}
+            {st.mail_only ? <div className="is-stat"><div className="is-stat-value">{st.mail_only.toLocaleString()}</div><div className="is-stat-label">Reachable by mail only</div></div> : null}
           </div>
         ) : null}
         <div className="card card-body mb-5 py-4">
@@ -276,13 +287,19 @@ const CitiesDatabase: React.FC = () => {
               <input className="form-check-input" type="checkbox" checked={filters.has_contact_page === "1"} onChange={(e) => setFilter("has_contact_page", e.target.checked ? "1" : "")} />
               <span className="form-check-label">Has a contact page</span>
             </label>
+            <label className="form-check form-check-sm form-check-custom mb-0" title="No email, phone or contact page, but a mailing address">
+              <input className="form-check-input" type="checkbox" checked={filters.mail_only === "1"} onChange={(e) => setFilter("mail_only", e.target.checked ? "1" : "")} />
+              <span className="form-check-label">Mail only</span>
+            </label>
             <label className="form-check form-check-sm form-check-custom mb-0">
               <input className="form-check-input" type="checkbox" checked={filters.near_signed_up === "1"} onChange={(e) => setFilter("near_signed_up", e.target.checked ? "1" : "")} />
               <span className="form-check-label">Signed-up school within 5 mi</span>
             </label>
             <input className="form-control form-control-sm w-250px" placeholder="Search city, county, contact or email" value={filters.search} onChange={(e) => setFilter("search", e.target.value)} />
             <span className="ms-auto text-muted fs-7">{total.toLocaleString()} cities</span>
+            <button className="btn btn-sm btn-light" disabled={mailBusy} onClick={downloadMail} title="The mailing addresses of the cities in this list, as a CSV for a mail merge or labels">{mailBusy ? "Building…" : "Download mailing list"}</button>
           </div>
+          {mailMsg ? <div className="text-muted fs-7 mt-2">{mailMsg}</div> : null}
         </div>
 
         <div className={`card ${loading ? "overlay overlay-block" : ""}`}>
@@ -303,7 +320,7 @@ const CitiesDatabase: React.FC = () => {
                       <td className="fs-7">{c.county}</td>
                       <td className="text-end fs-7">{c.population ? c.population.toLocaleString() : ""}</td>
                       <td className="fs-7">
-                        {c.email ? <><div>{c.contact_name || ROLE[c.email_role || ""] || "Email"}</div><div className="text-muted fs-8">{c.email}</div></> : (c.contact_page_url ? <><span className="text-muted">No email</span><div className="text-muted fs-8">Contact page{c.contact_page_form ? " (form)" : ""}</div></> : <span className="text-muted">No email yet</span>)}
+                        {c.email ? <><div>{c.contact_name || ROLE[c.email_role || ""] || "Email"}</div><div className="text-muted fs-8">{c.email}</div></> : (c.contact_page_url ? <><span className="text-muted">No email</span><div className="text-muted fs-8">Contact page{c.contact_page_form ? " (form)" : ""}</div></> : c.phone ? <><span className="text-muted">No email</span><div className="text-muted fs-8">{c.phone}</div></> : c.mailing_address ? <><span className="text-muted">Mail only</span><div className="text-muted fs-8">{c.mailing_city}, {c.mailing_state} {c.mailing_zip}</div></> : <span className="text-muted">No email yet</span>)}
                         {c.email2 ? <div className="text-muted fs-8">+ {c.email2}</div> : null}
                       </td>
                       <td className="fs-7">{c.nearest_signed_up_school ? <>{c.nearest_signed_up_school.name}<div className="text-muted fs-8">{miles(c.nearest_signed_up_school.miles)}{(c.signed_up_schools_near ?? 0) > 1 ? ` · ${c.signed_up_schools_near} schools` : ""}</div></> : <span className="text-muted">—</span>}</td>
